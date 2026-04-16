@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "mfs-memory": {
+      "command": "python3 -m mfs.mcp_server",
+      "description": "MFS Memory File System - Local MCP Server"
+    }
+  },
+  "imports": []
+}

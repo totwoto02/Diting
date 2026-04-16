@@ -1,0 +1,37 @@
+======================================================================
+双 Agent 模拟测试报告
+======================================================================
+
+测试时间：2026-04-15T15:34:17.625413 - 2026-04-16T06:34:21.976006
+总时长：15.00 小时
+总交互：2000 次
+平均速率：133.3 次/小时
+
+MFS 统计:
+  total_requests: 2000
+  total_responses: 2000
+  hallucination_count: 0
+  hallucination_rate: 0.00%
+  mft:
+    total: 186
+    by_type: {'NOTE': 186}
+    by_status: {'active': 186}
+  tracker:
+    total_logs: 2186
+    tracked_files: 2186
+    by_action: {'CREATE': 2186}
+  kg:
+    concept_count: 3
+    edge_count: 3
+    avg_edges_per_concept: 1.0
+  avg_latency_ms: 1.937628149986267
+
+幻觉分析:
+  总数：0
+  比率：0.00%
+
+严苛幻觉测试 (20% 比例):
+  总测试数：402
+  通过数：402
+  失败数：0
+  通过率：100.0%

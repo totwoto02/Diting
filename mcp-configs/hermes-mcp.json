@@ -1,0 +1,29 @@
+{
+  "$schema": "https://hermes.onairos.io/schemas/mcp-config-v1.json",
+  "mcpServers": {
+    "mfs-memory": {
+      "command": "python3",
+      "args": [
+        "-m",
+        "mfs.mcp_server"
+      ],
+      "cwd": "/root/.openclaw/workspace/projects/mfs-memory",
+      "env": {
+        "MFS_DB_PATH": "/root/.openclaw/workspace/projects/mfs-memory/mfs.db",
+        "PYTHONPATH": "/root/.openclaw/workspace/projects/mfs-memory"
+      },
+      "disabled": false,
+      "timeout": 60
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/root/.openclaw/workspace"
+      ],
+      "env": {},
+      "disabled": false
+    }
+  }
+}

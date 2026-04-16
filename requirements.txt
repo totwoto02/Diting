@@ -1,0 +1,14 @@
+# MFS Memory File System Dependencies
+# Python >= 3.11
+
+# MCP Protocol
+mcp>=1.0.0
+
+# Testing (dev)
+pytest>=7.0
+pytest-cov>=4.0
+pytest-asyncio>=0.23
+
+# Code Quality (dev)
+flake8>=6.0
+black>=23.0
