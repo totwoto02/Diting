@@ -9,6 +9,9 @@ pytest>=7.0
 pytest-cov>=4.0
 pytest-asyncio>=0.23
 
+# System Monitor
+psutil>=5.9.0
+
 # Code Quality (dev)
 flake8>=6.0
 black>=23.0
