@@ -136,7 +136,7 @@ class AIQueueManager:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 task_id, file_path, file_type, memory_path, user_id,
-                TaskStatus.PENDING.value, priority, datetime.now()
+                TaskStatus.PENDING.value, priority, datetime.now().isoformat()
             ))
             self.db.commit()
         
@@ -169,7 +169,7 @@ class AIQueueManager:
                 UPDATE ai_tasks
                 SET status = ?, started_at = ?
                 WHERE task_id = ?
-            """, (TaskStatus.PROCESSING.value, datetime.now(), task_id))
+            """, (TaskStatus.PROCESSING.value, datetime.now().isoformat(), task_id))
             self.db.commit()
             
             # 重新获取更新后的任务
@@ -194,7 +194,7 @@ class AIQueueManager:
                 SET status = ?, completed_at = ?, result = ?
                 WHERE task_id = ?
             """, (
-                TaskStatus.DONE.value, datetime.now(),
+                TaskStatus.DONE.value, datetime.now().isoformat(),
                 json.dumps(result), task_id
             ))
             self.db.commit()
@@ -229,7 +229,7 @@ class AIQueueManager:
                     UPDATE ai_tasks
                     SET status = ?, completed_at = ?, error_message = ?
                     WHERE task_id = ?
-                """, (TaskStatus.FAILED.value, datetime.now(), error_message, task_id))
+                """, (TaskStatus.FAILED.value, datetime.now().isoformat(), error_message, task_id))
                 
                 # 触发回调
                 if self.on_task_failed:
