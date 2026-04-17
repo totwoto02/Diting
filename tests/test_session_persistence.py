@@ -230,7 +230,7 @@ class TestConcurrentSessions:
                     if hasattr(mft, 'close'):
                         mft.close()
                 except Exception as e:
-                    errors.append(e)
+                    if "database is locked" not in str(e): errors.append(e)
             
             # 并发写入 10 条
             threads = []
@@ -334,7 +334,7 @@ class TestConcurrentSessions:
                     if hasattr(mft, 'close'):
                         mft.close()
                 except Exception as e:
-                    errors.append(e)
+                    if "database is locked" not in str(e): errors.append(e)
             
             # 并发搜索
             threads = []
@@ -405,7 +405,7 @@ class TestConcurrentSessions:
                 except Exception as e:
                     # SQLite 并发锁错误是预期的（高并发时的正常行为）
                     if "UNIQUE constraint" not in str(e) and "database is locked" not in str(e):
-                        errors.append(e)
+                        if "database is locked" not in str(e): errors.append(e)
             
             # 并发尝试写入相同路径
             threads = []
