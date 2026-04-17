@@ -136,7 +136,7 @@ class MultimodalMemoryManager:
             storage_path, original_filename,
             ai_summary, json.dumps(ai_keywords), json.dumps(ai_entities), ai_confidence,
             'warm', 50,
-            datetime.now(), datetime.now()
+            datetime.now().isoformat(), datetime.now().isoformat()
         ))
         
         self.db.commit()
@@ -234,7 +234,7 @@ class MultimodalMemoryManager:
             storage_path, original_filename,
             ai_summary, json.dumps(ai_keywords), raw_transcript, duration_seconds,
             'warm', 50,
-            datetime.now(), datetime.now()
+            datetime.now().isoformat(), datetime.now().isoformat()
         ))
         
         self.db.commit()
@@ -344,7 +344,7 @@ class MultimodalMemoryManager:
             SET reference_count = reference_count + 1,
                 updated_at = ?
             WHERE slice_id = ?
-        """, (datetime.now(), slice_id))
+        """, (datetime.now().isoformat(), slice_id))
         self.db.commit()
     
     def _build_search_vector(self, ai_summary: str = None,
@@ -395,7 +395,7 @@ class MultimodalMemoryManager:
         self.db.execute("""
             INSERT INTO ai_call_log (slice_id, call_type, model_name, called_at)
             VALUES (?, ?, 'qwen-vl-max', ?)
-        """, (slice_id, call_type, datetime.now()))
+        """, (slice_id, call_type, datetime.now().isoformat()))
         self.db.commit()
     
     def search(self, query: str, include_multimodal: bool = True) -> List[Dict]:

@@ -392,7 +392,7 @@ class EntropyManager:
             SET entropy = ?, entropy_level = ?, entropy_trend = ?,
                 last_entropy_change = ?
             WHERE slice_id = ?
-        """, (entropy, level, trend, datetime.now(), slice_id))
+        """, (entropy, level, trend, datetime.now().isoformat(), slice_id))
         self.db.commit()
     
     def _log_change(self, slice_id: str, old_entropy: int, new_entropy: int,

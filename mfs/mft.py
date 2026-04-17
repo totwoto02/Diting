@@ -213,7 +213,7 @@ class MFT:
                 INSERT INTO mft (v_path, type, status, content, create_ts, update_ts)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (v_path, type, status, content, datetime.now(), datetime.now())
+                (v_path, type, status, content, datetime.now().isoformat(), datetime.now().isoformat())
             )
             conn.commit()
             inode = cursor.lastrowid
@@ -294,7 +294,7 @@ class MFT:
                     SET content = ?, status = ?, update_ts = ?
                     WHERE v_path = ? AND deleted = 0
                     """,
-                    (content, status, datetime.now(), v_path)
+                    (content, status, datetime.now().isoformat(), v_path)
                 )
             elif content is not None:
                 cursor = conn.execute(
@@ -303,7 +303,7 @@ class MFT:
                     SET content = ?, update_ts = ?
                     WHERE v_path = ? AND deleted = 0
                     """,
-                    (content, datetime.now(), v_path)
+                    (content, datetime.now().isoformat(), v_path)
                 )
             else:  # status is not None
                 cursor = conn.execute(
@@ -312,7 +312,7 @@ class MFT:
                     SET status = ?, update_ts = ?
                     WHERE v_path = ? AND deleted = 0
                     """,
-                    (status, datetime.now(), v_path)
+                    (status, datetime.now().isoformat(), v_path)
                 )
             conn.commit()
             success = cursor.rowcount > 0
@@ -347,7 +347,7 @@ class MFT:
                 SET deleted = 1, status = 'deleted', update_ts = ?
                 WHERE v_path = ? AND deleted = 0
                 """,
-                (datetime.now(), v_path)
+                (datetime.now().isoformat(), v_path)
             )
             conn.commit()
             success = cursor.rowcount > 0
@@ -643,7 +643,7 @@ class MFT:
                 SET lcn_pointers = ?, update_ts = ?
                 WHERE v_path = ? AND deleted = 0
                 """,
-                (json.dumps(pointers), datetime.now(), v_path)
+                (json.dumps(pointers), datetime.now().isoformat(), v_path)
             )
             conn.commit()
             return cursor.rowcount > 0

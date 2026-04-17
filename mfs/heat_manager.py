@@ -191,7 +191,7 @@ class HeatManager:
             UPDATE multimodal_slices 
             SET heat_score = ?, last_heated_at = ?
             WHERE slice_id = ?
-        """, (new_score, datetime.now(), slice_id))
+        """, (new_score, datetime.now().isoformat(), slice_id))
         self.db.commit()
         
         # 记录日志
@@ -271,7 +271,7 @@ class HeatManager:
                 freeze_reason = ?, freeze_by = ?, freeze_at = ?,
                 iteration_status = 'frozen'
             WHERE slice_id = ?
-        """, (0, reason, changed_by, datetime.now(), slice_id))
+        """, (0, reason, changed_by, datetime.now().isoformat(), slice_id))
         self.db.commit()
         
         # 记录日志

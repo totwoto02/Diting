@@ -123,7 +123,7 @@ class BatchProcessor:
             INSERT OR REPLACE INTO batch_tasks 
             (id, task_type, priority, data, status, created_at)
             VALUES (?, ?, ?, ?, 'pending', ?)
-        """, (task_id, task_type, priority, json.dumps(data), datetime.now()))
+        """, (task_id, task_type, priority, json.dumps(data), datetime.now().isoformat()))
         self.db.commit()
         
         # 添加到队列
@@ -152,7 +152,7 @@ class BatchProcessor:
                     UPDATE batch_tasks 
                     SET status = 'processing', started_at = ?
                     WHERE id = ?
-                """, (datetime.now(), task.id))
+                """, (datetime.now().isoformat(), task.id))
                 
             except Exception:
                 break
@@ -176,7 +176,7 @@ class BatchProcessor:
         """, ('completed' if not error else 'failed', 
               json.dumps(result) if result else None,
               error,
-              datetime.now(),
+              datetime.now().isoformat(),
               task_id))
         self.db.commit()
     
