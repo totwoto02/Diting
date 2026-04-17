@@ -357,7 +357,6 @@ if __name__ == '__main__':
     # 创建审计日志器
     logger = AuditLogger(db_path)
     
-    print("✅ 审计日志器初始化成功")
     
     # 记录审计日志
     logger.log('user_001', 'ai_call', 'slice_123', {'model': 'qwen-vl-max'})
@@ -368,11 +367,9 @@ if __name__ == '__main__':
     
     # 查询日志
     logs = logger.query('user_001', time_range='1h')
-    print(f"审计日志：{len(logs)}条")
     
     # 获取统计
     stats = logger.get_statistics('1h')
-    print(f"统计：{stats['total']}条，成功率 {stats['success_rate']:.1f}%")
     
     # 清理
     logger.close()

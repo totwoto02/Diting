@@ -312,7 +312,6 @@ if __name__ == '__main__':
     # 创建批量处理器
     processor = BatchProcessor(db_path, {'BATCH_SIZE': 10})
     
-    print("✅ 批量处理器初始化成功")
     
     # 添加任务
     for i in range(5):
@@ -325,18 +324,15 @@ if __name__ == '__main__':
     
     # 检查队列状态
     status = processor.get_queue_status()
-    print(f"队列状态：{status}")
     
     # 等待处理
     time.sleep(2)
     
     # 检查处理结果
     status = processor.get_queue_status()
-    print(f"处理后状态：{status}")
     
     # 获取历史
     history = processor.get_batch_history()
-    print(f"处理历史：{len(history)}批")
     
     # 清理
     processor.close()

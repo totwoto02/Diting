@@ -411,7 +411,6 @@ if __name__ == '__main__':
     
     # 查看队列状态
     status = queue.get_queue_status()
-    print(f"队列状态：{status}")
     
     # 启动工作线程
     queue.start_workers()
@@ -421,8 +420,6 @@ if __name__ == '__main__':
     
     # 查看任务结果
     task1 = queue.get_task(task1_id)
-    print(f"任务 1 状态：{task1.status}")
-    print(f"任务 1 结果：{task1.result}")
     
     # 清理
     queue.close()
