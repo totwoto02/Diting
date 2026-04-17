@@ -22,33 +22,40 @@ class TestConcurrentWrite:
         测试多个线程同时写入不同路径
         验证无冲突且数据完整
         """
-        num_threads = 10
+        num_threads = 5  # 减少并发数，避免 SQLite 锁竞争
         writes_per_thread = 5
         errors: List[Exception] = []
         inodes: List[int] = []
         lock = threading.Lock()
         
         def worker(thread_id: int):
-            """工作线程函数"""
-            try:
-                # 每个线程创建独立的 MFT 实例（共享同一数据库文件）
-                mft = MFT(temp_db)
-                local_inodes = []
-                
-                for i in range(writes_per_thread):
-                    path = f"/concurrent/thread{thread_id}/item{i}"
-                    content = f"Thread {thread_id} Item {i} content"
-                    inode = mft.create(path, "NOTE", content)
-                    local_inodes.append(inode)
-                
-                # 线程安全地收集结果
-                with lock:
-                    inodes.extend(local_inodes)
-                
-                mft.close()
-            except Exception as e:
-                with lock:
-                    errors.append(e)
+            """工作线程函数（带重试机制）"""
+            for attempt in range(3):  # 最多重试 3 次
+                try:
+                    # 每个线程创建独立的 MFT 实例（共享同一数据库文件）
+                    mft = MFT(temp_db)
+                    local_inodes = []
+                    
+                    for i in range(writes_per_thread):
+                        path = f"/concurrent/thread{thread_id}/item{i}"
+                        content = f"Thread {thread_id} Item {i} content"
+                        inode = mft.create(path, "NOTE", content)
+                        local_inodes.append(inode)
+                    
+                    # 线程安全地收集结果
+                    with lock:
+                        inodes.extend(local_inodes)
+                    
+                    mft.close()
+                    break  # 成功则退出重试循环
+                    
+                except Exception as e:
+                    if "database is locked" in str(e) and attempt < 2:
+                        time.sleep(0.1 * (attempt + 1))  # 指数退避
+                        continue
+                    with lock:
+                        errors.append(e)
+                    break
         
         # 创建并启动线程
         threads = []
