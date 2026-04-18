@@ -1,7 +1,7 @@
 """
 MCP Server 实现
 
-暴露 3 个工具：mfs_read, mfs_write, mfs_search
+暴露 3 个工具：diting_read, diting_write, diting_search
 """
 
 import asyncio
@@ -26,16 +26,16 @@ class MCPServer:
         """
         import os
         if db_path is None:
-            db_path = os.environ.get('MFS_DB_PATH', None)
+            db_path = os.environ.get('DITING_DB_PATH', None)
             if not db_path:
                 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                db_path = os.path.join(base_dir, 'mfs.db')
+                db_path = os.path.join(base_dir, 'diting.db')
         
         # KG 数据库路径
-        kg_db_path = os.path.join(os.path.dirname(db_path), 'mfs_kg.db') if db_path != ':memory:' else None
+        kg_db_path = os.path.join(os.path.dirname(db_path), 'diting_kg.db') if db_path != ':memory:' else None
         
         self.mft = MFT(db_path=db_path, kg_db_path=kg_db_path)
-        self.server = Server("mfs-memory")
+        self.server = Server("diting")
         self._register_tools()
 
     def _register_tools(self):
@@ -45,7 +45,7 @@ class MCPServer:
         async def list_tools() -> list[Tool]:
             return [
                 Tool(
-                    name="mfs_read",
+                    name="diting_read",
                     description="读取记忆文件内容",
                     inputSchema={
                         "type": "object",
@@ -59,7 +59,7 @@ class MCPServer:
                     }
                 ),
                 Tool(
-                    name="mfs_write",
+                    name="diting_write",
                     description="写入或更新记忆文件",
                     inputSchema={
                         "type": "object",
@@ -81,7 +81,7 @@ class MCPServer:
                     }
                 ),
                 Tool(
-                    name="mfs_search",
+                    name="diting_search",
                     description="搜索记忆文件",
                     inputSchema={
                         "type": "object",
@@ -190,12 +190,12 @@ class MCPServer:
     async def call_tool(self, name: str, arguments: Dict[str, Any]) -> list[TextContent]:
         """MCP 工具调用入口"""
         try:
-            if name == "mfs_read":
-                return await self._mfs_read(arguments)
-            elif name == "mfs_write":
-                return await self._mfs_write(arguments)
-            elif name == "mfs_search":
-                return await self._mfs_search(arguments)
+            if name == "diting_read":
+                return await self._diting_read(arguments)
+            elif name == "diting_write":
+                return await self._diting_write(arguments)
+            elif name == "diting_search":
+                return await self._diting_search(arguments)
             # Phase 2: KG 工具
             elif name == "kg_search":
                 return await self._kg_search(arguments)
@@ -219,8 +219,8 @@ class MCPServer:
         except Exception as e:
             return [TextContent(type="text", text=f"系统错误：{str(e)}")]
 
-    async def _mfs_read(self, arguments: Dict[str, Any]) -> list[TextContent]:
-        """mfs_read 工具实现"""
+    async def _diting_read(self, arguments: Dict[str, Any]) -> list[TextContent]:
+        """diting_read 工具实现"""
         path = arguments.get("path")
         if not path:
             return [TextContent(type="text", text="错误：缺少 path 参数")]
@@ -234,8 +234,8 @@ class MCPServer:
         else:
             raise MFTNotFoundError(f"未找到路径：{path}")
 
-    async def _mfs_write(self, arguments: Dict[str, Any]) -> list[TextContent]:
-        """mfs_write 工具实现"""
+    async def _diting_write(self, arguments: Dict[str, Any]) -> list[TextContent]:
+        """diting_write 工具实现"""
         path = arguments.get("path")
         type_ = arguments.get("type")
         content = arguments.get("content")
@@ -254,8 +254,8 @@ class MCPServer:
             inode = self.mft.create(path, type_, content)
             return [TextContent(type="text", text=f"已创建：{path} (inode={inode})")]
 
-    async def _mfs_search(self, arguments: Dict[str, Any]) -> list[TextContent]:
-        """mfs_search 工具实现"""
+    async def _diting_search(self, arguments: Dict[str, Any]) -> list[TextContent]:
+        """diting_search 工具实现"""
         query = arguments.get("query")
         scope = arguments.get("scope")
 

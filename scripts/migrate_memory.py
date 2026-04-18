@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 
 # 添加 MFS 到路径
-sys.path.insert(0, '/root/.openclaw/workspace/projects/mfs-memory')
+sys.path.insert(0, '/root/.openclaw/workspace/projects/Diting')
 
 from diting.mft import MFT
 from diting.dialog_manager import DialogManager
@@ -25,12 +25,12 @@ def migrate_memory_file(mft: MFT, file_path: str, category: str = "memory"):
     
     # 生成 MFS 路径
     file_name = os.path.basename(file_path)
-    mfs_path = f"/{category}/{file_name}"
+    diting_path = f"/{category}/{file_name}"
     
     # 写入 MFS
     try:
-        mft.create(mfs_path, "NOTE", content)
-        print(f"  ✅ {mfs_path} ({len(content)} 字)")
+        mft.create(diting_path, "NOTE", content)
+        print(f"  ✅ {diting_path} ({len(content)} 字)")
         return True
     except Exception as e:
         print(f"  ❌ 失败：{e}")
@@ -49,17 +49,17 @@ def migrate_memory_directory(mft: MFT, dir_path: str, category: str = "memory"):
             file_path = os.path.join(root, file)
             # 生成相对路径
             rel_path = os.path.relpath(file_path, dir_path)
-            mfs_path = f"/{category}/{rel_path}"
+            diting_path = f"/{category}/{rel_path}"
             
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
-                mft.create(mfs_path, "NOTE", content)
-                print(f"  ✅ {mfs_path} ({len(content)} 字)")
+                mft.create(diting_path, "NOTE", content)
+                print(f"  ✅ {diting_path} ({len(content)} 字)")
                 count += 1
             except Exception as e:
-                print(f"  ❌ {mfs_path}: {e}")
+                print(f"  ❌ {diting_path}: {e}")
     
     return count
 
@@ -73,17 +73,17 @@ def main():
     # 备份目录（从参数或默认）
     backup_dir = "/root/.openclaw/backups/main_agent_memory_20260415_135758"
     
-    # MFS 数据库路径
-    mfs_db = "/root/.openclaw/workspace/projects/mfs-memory/mfs.db"
-    kg_db = "/root/.openclaw/workspace/projects/mfs-memory/mfs_kg.db"
+    # Diting 数据库路径
+    diting_db = "/root/.openclaw/workspace/projects/Diting/diting.db"
+    kg_db = "/root/.openclaw/workspace/projects/Diting/diting_kg.db"
     
     print(f"\n备份目录：{backup_dir}")
-    print(f"MFS 数据库：{mfs_db}")
+    print(f"Diting 数据库：{diting_db}")
     print(f"KG 数据库：{kg_db}")
     
     # 创建 MFT（带 KG）
     print("\n[1/4] 初始化 MFT...")
-    mft = MFT(db_path=mfs_db, kg_db_path=kg_db)
+    mft = MFT(db_path=diting_db, kg_db_path=kg_db)
     print(f"   ✅ MFT 已初始化 (KG: {mft.kg is not None})")
     
     # 迁移 MEMORY.md
@@ -123,9 +123,9 @@ def main():
     
     print("\n✅ 验证方法:")
     print("   # 使用 MCP 工具搜索记忆")
-    print("   mcporter call mfs-memory.mfs_search query=\"朋友\"")
-    print("   mcporter call mfs-memory.kg_stats")
-    print("   mcporter call mfs-memory.kg_search query=\"拍照\"")
+    print("   mcporter call diting.diting_search query=\"朋友\"")
+    print("   mcporter call diting.kg_stats")
+    print("   mcporter call diting.kg_search query=\"拍照\"")
     
     return 0
 

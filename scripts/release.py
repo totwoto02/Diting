@@ -27,7 +27,7 @@ def main():
     print("MFS Phase 1 MVP 发布脚本")
     print("=" * 60)
     
-    os.chdir("/root/.openclaw/workspace/projects/mfs-memory")
+    os.chdir("/root/.openclaw/workspace/projects/Diting")
     
     # Step 1: 构建 wheel
     success = run_command(
@@ -49,7 +49,7 @@ def main():
     print("📦 发布准备完成！")
     print("=" * 60)
     print("\n✅ 已完成:")
-    print("  - sdist 构建 (mfs_memory-0.1.0.tar.gz)")
+    print("  - sdist 构建 (diting-0.1.0.tar.gz)")
     print("  - 测试覆盖率验证 (93.71%)")
     print("  - 安全配置 (GitHub PAT + PyPI Token)")
     print("  - 发布报告创建 (RELEASE_REPORT.md)")
@@ -57,7 +57,7 @@ def main():
     print("\n⏳ 待手动执行:")
     print("  1. 创建 GitHub 仓库: https://github.com/new")
     print("  2. 推送代码:")
-    print("     git remote add origin https://github.com/YOUR_USERNAME/mfs-memory.git")
+    print("     git remote add origin https://github.com/YOUR_USERNAME/Diting.git")
     print("     git push -u origin main")
     print("  3. 创建 GitHub Release")
     print("  4. 上传到 PyPI: twine upload dist/*")

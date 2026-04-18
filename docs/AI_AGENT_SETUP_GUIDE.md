@@ -195,7 +195,7 @@ pip3 install -e .
 # pip3 install .
 
 # 验证安装
-python3 -c "from mfs.mft import MFT; print('✅ Diting 安装成功')"
+python3 -c "from diting.mft import MFT; print('✅ Diting 安装成功')"
 ```
 
 ### 3.4 验证 MCP 配置
@@ -219,7 +219,7 @@ if 'diting' not in config.get('mcpServers', {}):
     config['mcpServers']['diting'] = {
         "description": "Diting Memory File System - Local MCP Server",
         "command": "python3",
-        "args": ["-m", "mfs.mcp_server"],
+        "args": ["-m", "diting.mcp_server"],
         "cwd": "/root/.openclaw/workspace/projects/diting",
         "env": {
             "PYTHONPATH": "/root/.openclaw/workspace/projects/diting"
@@ -247,14 +247,14 @@ cd /root/.openclaw/workspace/projects/diting
 
 # 初始化 MFT 和 KG
 python3 << 'EOF'
-from mfs.mft import MFT
+from diting.mft import MFT
 
 # 创建数据库（会自动初始化 schema）
-mft = MFT(db_path='mfs.db', kg_db_path='mfs_kg.db')
+mft = MFT(db_path='diting.db', kg_db_path='diting_kg.db')
 
 print("✅ Diting 数据库已创建")
-print(f"   Diting 数据库：mfs.db")
-print(f"   KG 数据库：mfs_kg.db")
+print(f"   Diting 数据库：diting.db")
+print(f"   KG 数据库：diting_kg.db")
 
 # 验证
 stats = mft.get_stats()
@@ -288,11 +288,11 @@ mcporter list diting
 
 ```bash
 python3 << 'EOF'
-from mfs.mft import MFT
-from mfs.dialog_manager import DialogManager
+from diting.mft import MFT
+from diting.dialog_manager import DialogManager
 
 # 初始化
-mft = MFT(db_path='mfs.db', kg_db_path='mfs_kg.db')
+mft = MFT(db_path='diting.db', kg_db_path='diting_kg.db')
 dm = DialogManager(mft)
 
 print("✅ 对话管理器已初始化")
@@ -327,9 +327,9 @@ python3 scripts/migrate_memory.py
 
 ```bash
 python3 << 'EOF'
-from mfs.mft import MFT
+from diting.mft import MFT
 
-mft = MFT(db_path='mfs.db', kg_db_path='mfs_kg.db')
+mft = MFT(db_path='diting.db', kg_db_path='diting_kg.db')
 
 # 手动迁移关键记忆
 memories = [
@@ -461,7 +461,7 @@ UNIQUE constraint failed: mft.v_path
 ```bash
 # 路径冲突，清理测试数据
 cd /root/.openclaw/workspace/projects/diting
-rm -f mfs.db mfs_kg.db
+rm -f diting.db diting_kg.db
 
 # 重新运行迁移
 python3 scripts/migrate_memory.py
@@ -477,8 +477,8 @@ python3 scripts/migrate_memory.py
 ```bash
 # 检查 MFT 初始化是否传入 kg_db_path
 python3 << 'EOF'
-from mfs.mft import MFT
-mft = MFT(db_path='mfs.db', kg_db_path='mfs_kg.db')
+from diting.mft import MFT
+mft = MFT(db_path='diting.db', kg_db_path='diting_kg.db')
 print(f"KG enabled: {mft.kg is not None}")
 EOF
 ```
@@ -494,7 +494,7 @@ tail -f /root/.openclaw/logs/openclaw.log
 
 # Diting 调试
 export DEBUG=1
-python3 -m mfs.mcp_server
+python3 -m diting.mcp_server
 ```
 
 ### 7.3 恢复备份
@@ -539,7 +539,7 @@ echo "✅ 备份恢复完成"
 2. **定期清理**
    ```bash
    # 每周运行一次清理
-   python3 -c "from mfs.mft import MFT; from mfs.dialog_manager import DialogManager; dm = DialogManager(MFT(db_path='mfs.db', kg_db_path='mfs_kg.db')); dm.cleanup_old_dialogs()"
+   python3 -c "from diting.mft import MFT; from diting.dialog_manager import DialogManager; dm = DialogManager(MFT(db_path='diting.db', kg_db_path='diting_kg.db')); dm.cleanup_old_dialogs()"
    ```
 
 3. **定期备份**

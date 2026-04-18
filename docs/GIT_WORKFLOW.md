@@ -229,7 +229,7 @@ jobs:
       
       - name: Run tests
         run: |
-          pytest --cov=mfs --cov-report=xml --cov-fail-under=80
+          pytest --cov=diting --cov-report=xml --cov-fail-under=80
       
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -249,7 +249,7 @@ jobs:
         run: pip install flake8
       
       - name: Run flake8
-        run: flake8 mfs/ --max-line-length=100
+        run: flake8 diting/ --max-line-length=100
 ```
 
 ### 5.2 分支保护规则
@@ -511,10 +511,10 @@ git push origin feature/xxx
 pytest tests/ -v
 
 # 检查覆盖率
-pytest --cov=mfs --cov-fail-under=80
+pytest --cov=diting --cov-fail-under=80
 
 # 代码风格
-flake8 mfs/ --max-line-length=100
+flake8 diting/ --max-line-length=100
 
 # 格式化
 black mfs/ tests/
@@ -527,7 +527,7 @@ black mfs/ tests/
 pytest tests/ -v
 
 # 覆盖率达标
-pytest --cov=mfs --cov-fail-under=80
+pytest --cov=diting --cov-fail-under=80
 
 # 文档齐全
 ls README.md docs/*.md

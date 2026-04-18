@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-MFS 版本信息 CLI 工具
+Diting 版本信息 CLI 工具
 
 Usage:
-    mfs-version
-    mfs-version --all
-    mfs-version --check <version>
+    diting-version
+    diting-version --all
+    diting-version --check <version>
 """
 
 import diting

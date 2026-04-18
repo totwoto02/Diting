@@ -1,16 +1,16 @@
 {
   "$schema": "https://hermes.onairos.io/schemas/mcp-config-v1.json",
   "mcpServers": {
-    "mfs-memory": {
+    "diting": {
       "command": "python3",
       "args": [
         "-m",
-        "mfs.mcp_server"
+        "diting.mcp_server"
       ],
-      "cwd": "/root/.openclaw/workspace/projects/mfs-memory",
+      "cwd": "/root/.openclaw/workspace/projects/Diting",
       "env": {
-        "MFS_DB_PATH": "/root/.openclaw/workspace/projects/mfs-memory/mfs.db",
-        "PYTHONPATH": "/root/.openclaw/workspace/projects/mfs-memory"
+        "DITING_DB_PATH": "/root/.openclaw/workspace/projects/Diting/diting.db",
+        "PYTHONPATH": "/root/.openclaw/workspace/projects/Diting"
       },
       "disabled": false,
       "timeout": 60

@@ -28,9 +28,9 @@
 
 ### API 使用
 ```python
-from mfs.fts5_search import FTS5Search
+from diting.fts5_search import FTS5Search
 
-fts = FTS5Search('mfs.db')
+fts = FTS5Search('diting.db')
 
 # 搜索
 results = fts.search("用户朋友", scope="/agent", top_k=20)
@@ -70,7 +70,7 @@ stats = fts.get_search_stats()
 
 ### API 使用
 ```python
-from mfs.assembler_v2 import AssemblerV2
+from diting.assembler_v2 import AssemblerV2
 
 assembler = AssemblerV2()
 
@@ -119,9 +119,9 @@ print(f"相似度：{verification['similarity']}%")
 
 ### API 使用
 ```python
-from mfs.integrity_tracker import IntegrityTracker
+from diting.integrity_tracker import IntegrityTracker
 
-tracker = IntegrityTracker('mfs.db')
+tracker = IntegrityTracker('diting.db')
 
 # 追踪创建
 r1 = tracker.track_create("/memory/doc.md", "内容", "AI")
@@ -250,11 +250,11 @@ history = tracker.get_history("/memory/doc.md")
 
 ### 1. 启用防幻觉（推荐）
 ```python
-from mfs.mft import MFT
-from mfs.integrity_tracker import IntegrityTracker
+from diting.mft import MFT
+from diting.integrity_tracker import IntegrityTracker
 
-mft = MFT(db_path='mfs.db', kg_db_path='mfs_kg.db')
-tracker = IntegrityTracker('mfs.db')
+mft = MFT(db_path='diting.db', kg_db_path='diting_kg.db')
+tracker = IntegrityTracker('diting.db')
 
 # 写入时追踪
 content = "新内容"
@@ -264,7 +264,7 @@ mft.create("/memory/doc.md", "NOTE", content)
 
 ### 2. 使用优化拼装
 ```python
-from mfs.assembler_v2 import AssemblerV2
+from diting.assembler_v2 import AssemblerV2
 
 assembler = AssemblerV2()
 result = assembler.assemble_with_quality(slices)
@@ -279,7 +279,7 @@ else:
 ```python
 # 如果 FTS5 不可用，使用 LIKE 降级
 try:
-    fts = FTS5Search('mfs.db')
+    fts = FTS5Search('diting.db')
     results = fts.search("关键词")
 except sqlite3.OperationalError:
     # 降级到 LIKE 搜索

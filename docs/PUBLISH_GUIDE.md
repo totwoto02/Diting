@@ -235,10 +235,10 @@ python -c "import mfs; print(mfs.__version__)"
 pytest tests/ -v
 
 # ✅ 覆盖率达标 (>90%)
-pytest --cov=mfs --cov-fail-under=90
+pytest --cov=diting --cov-fail-under=90
 
 # ✅ 代码风格检查
-flake8 mfs/ --max-line-length=100
+flake8 diting/ --max-line-length=100
 
 # ✅ 版本号正确
 grep "version=" setup.py  # 应该是 0.1.0
@@ -430,7 +430,7 @@ pytest tests/ -v --cov=mfs --cov-fail-under=90
 
 # 2. 代码风格检查
 echo "2. Checking code style..."
-flake8 mfs/ --max-line-length=100
+flake8 diting/ --max-line-length=100
 
 # 3. 构建分发包
 echo "3. Building distribution..."

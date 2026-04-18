@@ -113,7 +113,7 @@ pytest-cov>=4.0.0 # 覆盖率
 pytest -v
 
 # 查看覆盖率
-pytest --cov=mfs --cov-report=term-missing
+pytest --cov=diting --cov-report=term-missing
 
 # 预期输出：所有测试通过，覆盖率 > 80%
 ```
@@ -125,7 +125,7 @@ Diting 会在首次运行时自动创建数据库。
 **内存数据库** (临时，重启后数据丢失):
 ```bash
 # 默认配置，无需额外设置
-python -m mfs.mcp_server
+python -m diting.mcp_server
 ```
 
 **文件数据库** (持久化，推荐):
@@ -137,17 +137,17 @@ export Diting_DB_PATH="file:/path/to/mfs_memory.db?mode=rwc"
 export Diting_DB_PATH="/absolute/path/to/mfs_memory.db"
 
 # 启动 MCP Server
-python -m mfs.mcp_server
+python -m diting.mcp_server
 ```
 
 ### 6. 启动 MCP Server
 
 ```bash
 # 前台运行 (开发调试)
-python -m mfs.mcp_server
+python -m diting.mcp_server
 
 # 后台运行 (生产环境)
-nohup python -m mfs.mcp_server > mfs.log 2>&1 &
+nohup python -m diting.mcp_server > mfs.log 2>&1 &
 
 # 使用 systemd (Linux 生产环境)
 # 创建 /etc/systemd/system/mfs.service
@@ -160,7 +160,7 @@ Type=simple
 User=your_user
 WorkingDirectory=/path/to/diting
 Environment=Diting_DB_PATH=/path/to/mfs_memory.db
-ExecStart=/path/to/venv/bin/python -m mfs.mcp_server
+ExecStart=/path/to/venv/bin/python -m diting.mcp_server
 Restart=always
 
 [Install]
@@ -185,7 +185,7 @@ Diting 通过 MCP (Model Context Protocol) 暴露工具给 AI Agent。
 
 | 变量 | 说明 | 默认值 | 示例 |
 |------|------|--------|------|
-| `Diting_DB_PATH` | 数据库路径 | `:memory:` | `file:/path/to/mfs.db` |
+| `Diting_DB_PATH` | 数据库路径 | `:memory:` | `file:/path/to/diting.db` |
 | `Diting_CACHE_SIZE` | LRU 缓存大小 | `1000` | `2000` |
 | `Diting_LOG_LEVEL` | 日志级别 | `INFO` | `DEBUG` |
 | `Diting_LOG_FILE` | 日志文件路径 | `None` | `/var/log/mfs.log` |
@@ -216,7 +216,7 @@ Diting 通过 MCP (Model Context Protocol) 暴露工具给 AI Agent。
 启动时指定配置文件:
 
 ```bash
-Diting_CONFIG=/path/to/mfs_config.json python -m mfs.mcp_server
+Diting_CONFIG=/path/to/mfs_config.json python -m diting.mcp_server
 ```
 
 ---
@@ -236,7 +236,7 @@ Diting_CONFIG=/path/to/mfs_config.json python -m mfs.mcp_server
   "mcpServers": {
     "mfs": {
       "command": "python",
-      "args": ["-m", "mfs.mcp_server"],
+      "args": ["-m", "diting.mcp_server"],
       "cwd": "/root/.openclaw/workspace/projects/diting",
       "env": {
         "Diting_DB_PATH": "file:/root/.openclaw/workspace/projects/diting/mfs_memory.db?mode=rwc"
@@ -291,7 +291,7 @@ AI: [调用 mfs_write 工具]
       "mfs": {
         "type": "stdio",
         "command": "python",
-        "args": ["-m", "mfs.mcp_server"],
+        "args": ["-m", "diting.mcp_server"],
         "cwd": "/root/.openclaw/workspace/projects/diting",
         "env": {
           "Diting_DB_PATH": "file:/root/.openclaw/workspace/projects/diting/mfs_memory.db?mode=rwc"
@@ -409,7 +409,7 @@ cd /path/to/diting
 export PYTHONPATH=/path/to/diting:$PYTHONPATH
 
 # 或者使用 -m 参数运行
-python -m mfs.mcp_server
+python -m diting.mcp_server
 ```
 
 ### Q5: OpenClaw/OpenCode 无法连接 MCP
@@ -424,7 +424,7 @@ python -m mfs.mcp_server
 ```bash
 # 手动测试 MCP Server
 cd /path/to/diting
-python -m mfs.mcp_server
+python -m diting.mcp_server
 
 # 检查日志
 tail -f mfs.log
@@ -447,7 +447,7 @@ export Diting_DB_PATH="/path/to/ssd/mfs_memory.db"
 
 # 3. 启用 WAL 模式 (已在代码中默认启用)
 # 4. 定期清理已删除的记忆
-python -c "from mfs import MFT; mft = MFT('file:mfs.db'); mft.vacuum()"
+python -c "from diting import MFT; mft = MFT('file:diting.db'); mft.vacuum()"
 ```
 
 ### Q7: 数据丢失
@@ -486,7 +486,7 @@ pytest tests/test_mft.py -v
 pytest tests/test_mft.py -v -s
 
 # 检查覆盖率
-pytest --cov=mfs --cov-report=term-missing
+pytest --cov=diting --cov-report=term-missing
 ```
 
 ---
@@ -578,7 +578,7 @@ top -p $(pgrep -f mcp_server)
 
 3. **诊断问题**
    ```bash
-   python -c "from mfs import MFT; mft = MFT('file:mfs_memory.db'); print(mft.search(''))"
+   python -c "from diting import MFT; mft = MFT('file:mfs_memory.db'); print(mft.search(''))"
    ```
 
 4. **修复或恢复**
@@ -588,7 +588,7 @@ top -p $(pgrep -f mcp_server)
    
    # 或重建数据库
    rm mfs_memory.db
-   python -m mfs.mcp_server  # 会自动创建新数据库
+   python -m diting.mcp_server  # 会自动创建新数据库
    ```
 
 5. **重启服务**

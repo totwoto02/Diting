@@ -175,7 +175,7 @@ mcporter call diting.kg_get_related concept="用户朋友" top_k=20
 
 1. **KG 依赖 MFT**: 知识图谱在 MFT create 时自动构建
 2. **首次建图**: 第一次写入记忆时会初始化 KG
-3. **持久化**: KG 数据存储在 `mfs_kg.db` 文件中
+3. **持久化**: KG 数据存储在 `diting_kg.db` 文件中
 4. **性能**: 大规模图谱（10 万 + 概念）建议使用缓存
 
 ---

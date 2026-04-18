@@ -28,10 +28,10 @@ MAJOR.MINOR.PATCH
 pytest tests/ -v
 
 # 覆盖率达标 (>90%)
-pytest --cov=mfs --cov-fail-under=90
+pytest --cov=diting --cov-fail-under=90
 
 # 代码风格检查
-flake8 mfs/ --max-line-length=100
+flake8 diting/ --max-line-length=100
 
 # 文档齐全
 ls -la README.md docs/*.md
@@ -184,10 +184,10 @@ find ~/.mfs/logs/ -name "*.log" -mtime +7 -delete
 
 ```bash
 # 备份 Diting 数据库
-cp ~/.mfs/mfs.db ~/.mfs/backup/mfs_$(date +%Y%m%d).db
+cp ~/.mfs/diting.db ~/.mfs/backup/mfs_$(date +%Y%m%d).db
 
 # 定期备份 (cron)
-0 2 * * * cp ~/.mfs/mfs.db ~/.mfs/backup/mfs_$(date +\%Y\%m\%d).db
+0 2 * * * cp ~/.mfs/diting.db ~/.mfs/backup/mfs_$(date +\%Y\%m\%d).db
 ```
 
 ### 监控
@@ -197,10 +197,10 @@ cp ~/.mfs/mfs.db ~/.mfs/backup/mfs_$(date +%Y%m%d).db
 ps aux | grep mfs
 
 # 检查数据库大小
-du -sh ~/.mfs/mfs.db
+du -sh ~/.mfs/diting.db
 
 # 检查测试覆盖率
-pytest --cov=mfs --cov-report=term
+pytest --cov=diting --cov-report=term
 ```
 
 ---
@@ -215,7 +215,7 @@ A: 运行 `pytest tests/ -v` 查看详细错误，根据错误信息修复。
 
 **Q: 覆盖率不达标怎么办？**
 
-A: 运行 `pytest --cov=mfs --cov-report=html` 查看覆盖率报告，针对未覆盖的代码添加测试。
+A: 运行 `pytest --cov=diting --cov-report=html` 查看覆盖率报告，针对未覆盖的代码添加测试。
 
 **Q: PyPI 上传失败怎么办？**
 

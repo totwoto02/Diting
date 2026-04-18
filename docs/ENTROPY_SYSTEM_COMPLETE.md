@@ -117,10 +117,10 @@
 ### Python API
 
 ```python
-from mfs.entropy_manager import EntropyManager
+from diting.entropy_manager import EntropyManager
 
 # 初始化
-entropy = EntropyManager('mfs.db', {'ENABLE_ENTROPY': True})
+entropy = EntropyManager('diting.db', {'ENABLE_ENTROPY': True})
 
 # 计算熵值
 result = entropy.calculate_entropy('slice_001')

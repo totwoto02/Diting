@@ -447,16 +447,16 @@ class ConnectionPool:
 ### 基础使用
 
 ```python
-from mfs.mft import MFT
-from mfs.fts5_search import FTS5Search
-from mfs.knowledge_graph_v2 import KnowledgeGraphV2
-from mfs.wal_logger import WALLogger
+from diting.mft import MFT
+from diting.fts5_search import FTS5Search
+from diting.knowledge_graph_v2 import KnowledgeGraphV2
+from diting.wal_logger import WALLogger
 
 # 初始化
-mft = MFT(db_path="mfs.db")
-fts5 = FTS5Search(db_path="mfs.db")
-kg = KnowledgeGraphV2(db_path="mfs_kg.db")
-wal = WALLogger(db_path="mfs.db")
+mft = MFT(db_path="diting.db")
+fts5 = FTS5Search(db_path="diting.db")
+kg = KnowledgeGraphV2(db_path="diting_kg.db")
+wal = WALLogger(db_path="diting.db")
 
 # CREATE - 写入记忆
 mft.create("/person/用户朋友/preferences", "NOTE", "用户朋友喜欢游戏")
@@ -487,9 +487,9 @@ print(related)
 ### 热力学四系统
 
 ```python
-from mfs.free_energy_manager import FreeEnergyManager
+from diting.free_energy_manager import FreeEnergyManager
 
-fe = FreeEnergyManager(db_path="mfs.db")
+fe = FreeEnergyManager(db_path="diting.db")
 
 # 计算自由能 G = U - TS
 result = fe.calculate_free_energy(

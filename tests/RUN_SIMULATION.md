@@ -108,7 +108,7 @@ with open('tests/simulation_results/final_report.json') as f:
     print(f"总交互：{data['test_summary']['total_interactions']}")
     print(f"幻觉数：{data['hallucination_analysis']['total']}")
     print(f"幻觉率：{data['hallucination_analysis']['rate']}")
-    print(f"平均延迟：{data['mfs_stats']['avg_latency_ms']:.2f}ms")
+    print(f"平均延迟：{data['diting_stats']['avg_latency_ms']:.2f}ms")
 EOF
 ```
 
@@ -137,7 +137,7 @@ simulation_results/
   "timestamp": "2026-04-15T15:08:05",
   "total_interactions": 100,
   "results": [...],  // 最近 100 条交互
-  "mfs_stats": {...},
+  "diting_stats": {...},
   "human_memory": [...]
 }
 ```
@@ -152,7 +152,7 @@ simulation_results/
     "total_interactions": 2000,
     "requests_per_hour": 133.3
   },
-  "mfs_stats": {...},
+  "diting_stats": {...},
   "hallucination_analysis": {...},
   "sample_interactions": [...],
   "recent_interactions": [...]
@@ -350,11 +350,11 @@ print(f"\n测试时长：{summary['duration_hours']:.2f} 小时")
 print(f"总交互：{summary['total_interactions']} 次")
 print(f"平均速率：{summary['requests_per_hour']:.1f} 次/小时")
 
-mfs = data['mfs_stats']
+mfs = data['diting_stats']
 print(f"\nMFS 性能:")
-print(f"  平均延迟：{mfs['avg_latency_ms']:.2f}ms")
-print(f"  记忆数：{mfs['mft']['total']}")
-print(f"  KG 概念：{mfs['kg']['concept_count']}")
+print(f"  平均延迟：{diting['avg_latency_ms']:.2f}ms")
+print(f"  记忆数：{diting['mft']['total']}")
+print(f"  KG 概念：{diting['kg']['concept_count']}")
 
 hallucination = data['hallucination_analysis']
 print(f"\n幻觉检测:")
@@ -363,9 +363,9 @@ print(f"  比率：{hallucination['rate']}")
 
 # 评级
 print(f"\n综合评级:", end=" ")
-if hallucination['total'] == 0 and mfs['avg_latency_ms'] < 2:
+if hallucination['total'] == 0 and diting['avg_latency_ms'] < 2:
     print("⭐⭐⭐⭐⭐ 优秀")
-elif hallucination['total'] < 5 and mfs['avg_latency_ms'] < 5:
+elif hallucination['total'] < 5 and diting['avg_latency_ms'] < 5:
     print("⭐⭐⭐⭐ 良好")
 else:
     print("⭐⭐⭐ 需优化")

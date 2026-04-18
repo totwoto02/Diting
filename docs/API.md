@@ -75,7 +75,7 @@
 #### Python API
 
 ```python
-from mfs import MFT
+from diting import MFT
 
 mft = MFT("file:mfs_memory.db?mode=rwc")
 
@@ -165,7 +165,7 @@ print(result["content"])
 #### Python API
 
 ```python
-from mfs import MFT
+from diting import MFT
 
 mft = MFT("file:mfs_memory.db?mode=rwc")
 
@@ -267,7 +267,7 @@ mft.update("/rules/coding", "代码必须经过测试和代码审查才能提交
 #### Python API
 
 ```python
-from mfs import MFT
+from diting import MFT
 
 mft = MFT("file:mfs_memory.db?mode=rwc")
 
@@ -334,7 +334,7 @@ results = mft.search("会议", limit=5)
   "mcpServers": {
     "mfs": {
       "command": "python",
-      "args": ["-m", "mfs.mcp_server"],
+      "args": ["-m", "diting.mcp_server"],
       "cwd": "/path/to/diting",
       "env": {
         "Diting_DB_PATH": "file:/path/to/mfs_memory.db?mode=rwc"
@@ -353,7 +353,7 @@ results = mft.search("会议", limit=5)
   "mcpServers": {
     "mfs": {
       "command": "python",
-      "args": ["-m", "mfs.mcp_server"],
+      "args": ["-m", "diting.mcp_server"],
       "cwd": "/path/to/diting"
     }
   }
@@ -372,13 +372,13 @@ results = mft.search("会议", limit=5)
 
 ```bash
 # 使用默认配置 (内存数据库)
-python -m mfs.mcp_server
+python -m diting.mcp_server
 
 # 使用文件数据库 (持久化)
-Diting_DB_PATH="file:/path/to/mfs_memory.db?mode=rwc" python -m mfs.mcp_server
+Diting_DB_PATH="file:/path/to/mfs_memory.db?mode=rwc" python -m diting.mcp_server
 
 # 自定义日志级别
-Diting_LOG_LEVEL=DEBUG python -m mfs.mcp_server
+Diting_LOG_LEVEL=DEBUG python -m diting.mcp_server
 ```
 
 ---
@@ -415,7 +415,7 @@ Diting_LOG_LEVEL=DEBUG python -m mfs.mcp_server
 #### Python API
 
 ```python
-from mfs import MFT, DitingPathNotFoundError, DitingError
+from diting import MFT, DitingPathNotFoundError, DitingError
 
 mft = MFT("file:mfs_memory.db?mode=rwc")
 
@@ -455,7 +455,7 @@ except DitingError as e:
 ### 完整工作流
 
 ```python
-from mfs import MFT
+from diting import MFT
 
 # 1. 初始化
 mft = MFT("file:mfs_memory.db?mode=rwc")

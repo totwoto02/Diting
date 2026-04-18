@@ -124,7 +124,7 @@
 
 **文件**: [mock_ultra_long_conversations.json](https://lightai.cloud.tencent.com/drive/preview?filePath=1776157722704/mock_ultra_long_conversations.json)
 
-**本地路径**: `/root/.openclaw/workspace/projects/mfs-memory/tests/mock_ultra_long_conversations.json`
+**本地路径**: `/root/.openclaw/workspace/projects/Diting/tests/mock_ultra_long_conversations.json`
 
 ---
 
@@ -146,8 +146,8 @@
 
 ## 🛠️ 生成工具
 
-**生成脚本**: `/root/.openclaw/workspace/projects/mfs-memory/tests/generate_conversations.py`  
-**验证脚本**: `/root/.openclaw/workspace/projects/mfs-memory/tests/validate_conversations.py`
+**生成脚本**: `/root/.openclaw/workspace/projects/Diting/tests/generate_conversations.py`  
+**验证脚本**: `/root/.openclaw/workspace/projects/Diting/tests/validate_conversations.py`
 
 ---
 

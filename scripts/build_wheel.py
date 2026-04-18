@@ -3,7 +3,7 @@
 import subprocess
 import os
 
-os.chdir("/root/.openclaw/workspace/projects/mfs-memory")
+os.chdir("/root/.openclaw/workspace/projects/Diting")
 
 print("=" * 60)
 print("MFS Phase 1 MVP 发布 - Step 6: 构建 wheel")

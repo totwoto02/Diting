@@ -1,7 +1,7 @@
 # MCP 配置打包清单
 
 **打包时间**: 2026-04-16  
-**打包位置**: `/root/.openclaw/workspace/projects/mfs-memory/mcp-configs/`  
+**打包位置**: `/root/.openclaw/workspace/projects/diting/mcp-configs/`  
 
 ---
 
@@ -9,10 +9,10 @@
 
 | 平台 | 文件名 | 大小 | MCP 服务器 | 状态 |
 |------|--------|------|-----------|------|
-| **Claude Code** | `claude-code-mcp.json` | 824B | mfs-memory, hermes, filesystem | ✅ 已打包 |
-| **OpenCode** | `opencode-mcp.json` | 902B | mfs-memory, hermes, filesystem | ✅ 已打包 |
-| **Hermes** | `hermes-mcp.json` | 711B | mfs-memory, filesystem | ✅ 已打包 |
-| **OpenClaw** | `openclaw-mcp.json` | 867B | mfs-memory, hermes, filesystem | ✅ 已打包 |
+| **Claude Code** | `claude-code-mcp.json` | 824B | diting, hermes, filesystem | ✅ 已打包 |
+| **OpenCode** | `opencode-mcp.json` | 902B | diting, hermes, filesystem | ✅ 已打包 |
+| **Hermes** | `hermes-mcp.json` | 711B | diting, filesystem | ✅ 已打包 |
+| **OpenClaw** | `openclaw-mcp.json` | 867B | diting, hermes, filesystem | ✅ 已打包 |
 
 ---
 
@@ -21,7 +21,7 @@
 ### Claude Code 用户
 
 ```bash
-cp /root/.openclaw/workspace/projects/mfs-memory/mcp-configs/claude-code-mcp.json \
+cp /root/.openclaw/workspace/projects/diting/mcp-configs/claude-code-mcp.json \
    ~/.config/claude/mcp.json
 
 # 验证
@@ -30,7 +30,7 @@ cat ~/.config/claude/mcp.json | jq '.mcpServers | keys'
 
 **输出**:
 ```json
-["filesystem", "hermes", "mfs-memory"]
+["filesystem", "hermes", "diting"]
 ```
 
 ---
@@ -38,7 +38,7 @@ cat ~/.config/claude/mcp.json | jq '.mcpServers | keys'
 ### OpenCode 用户
 
 ```bash
-cp /root/.openclaw/workspace/projects/mfs-memory/mcp-configs/opencode-mcp.json \
+cp /root/.openclaw/workspace/projects/diting/mcp-configs/opencode-mcp.json \
    ~/.opencode/mcp.json
 
 # 验证
@@ -47,7 +47,7 @@ cat ~/.opencode/mcp.json | jq '.mcp.servers | keys'
 
 **输出**:
 ```json
-["filesystem", "hermes", "mfs-memory"]
+["filesystem", "hermes", "diting"]
 ```
 
 ---
@@ -55,7 +55,7 @@ cat ~/.opencode/mcp.json | jq '.mcp.servers | keys'
 ### Hermes 用户
 
 ```bash
-cp /root/.openclaw/workspace/projects/mfs-memory/mcp-configs/hermes-mcp.json \
+cp /root/.openclaw/workspace/projects/diting/mcp-configs/hermes-mcp.json \
    ~/.hermes/mcp.json
 
 # 验证
@@ -64,7 +64,7 @@ cat ~/.hermes/mcp.json | jq '.mcpServers | keys'
 
 **输出**:
 ```json
-["filesystem", "mfs-memory"]
+["filesystem", "diting"]
 ```
 
 ---
@@ -72,7 +72,7 @@ cat ~/.hermes/mcp.json | jq '.mcpServers | keys'
 ### OpenClaw 用户
 
 ```bash
-cp /root/.openclaw/workspace/projects/mfs-memory/mcp-configs/openclaw-mcp.json \
+cp /root/.openclaw/workspace/projects/diting/mcp-configs/openclaw-mcp.json \
    ~/.openclaw/mcp.json
 
 # 验证
@@ -81,7 +81,7 @@ cat ~/.openclaw/mcp.json | jq '.mcpServers | keys'
 
 **输出**:
 ```json
-["filesystem", "hermes", "mfs-memory"]
+["filesystem", "hermes", "diting"]
 ```
 
 ---
@@ -100,7 +100,7 @@ cat ~/.openclaw/mcp.json | jq '.mcpServers | keys'
 
 ## 🎯 MCP 服务器说明
 
-### 1. mfs-memory
+### 1. diting
 
 **功能**: MFS 记忆系统
 
@@ -113,11 +113,11 @@ cat ~/.openclaw/mcp.json | jq '.mcpServers | keys'
 ```json
 {
   "command": "python3",
-  "args": ["-m", "mfs.mcp_server"],
-  "cwd": "/root/.openclaw/workspace/projects/mfs-memory",
+  "args": ["-m", "diting.mcp_server"],
+  "cwd": "/root/.openclaw/workspace/projects/diting",
   "env": {
-    "MFS_DB_PATH": "/root/.openclaw/workspace/projects/mfs-memory/mfs.db",
-    "PYTHONPATH": "/root/.openclaw/workspace/projects/mfs-memory"
+    "DITING_DB_PATH": "/root/.openclaw/workspace/projects/diting/diting.db",
+    "PYTHONPATH": "/root/.openclaw/workspace/projects/diting"
   }
 }
 ```
@@ -167,15 +167,15 @@ cat ~/.openclaw/mcp.json | jq '.mcpServers | keys'
 确保以下环境变量已设置：
 
 ```bash
-export MFS_DB_PATH="/root/.openclaw/workspace/projects/mfs-memory/mfs.db"
-export PYTHONPATH="/root/.openclaw/workspace/projects/mfs-memory"
+export DITING_DB_PATH="/root/.openclaw/workspace/projects/diting/diting.db"
+export PYTHONPATH="/root/.openclaw/workspace/projects/diting"
 ```
 
 ### 路径配置
 
 MFS MCP 服务器工作目录：
 ```
-/root/.openclaw/workspace/projects/mfs-memory/
+/root/.openclaw/workspace/projects/diting/
 ```
 
 ### 权限要求
@@ -195,7 +195,7 @@ MFS MCP 服务器工作目录：
 {
   "$schema": "https://.../mcp-config-v1.json",
   "mcpServers": {
-    "mfs-memory": { ... },
+    "diting": { ... },
     "hermes": { ... },
     "filesystem": { ... }
   }
@@ -209,7 +209,7 @@ MFS MCP 服务器工作目录：
   "$schema": "https://.../mcp-config-v1.json",
   "mcp": {
     "servers": {
-      "mfs-memory": { ... },
+      "diting": { ... },
       "hermes": { ... },
       "filesystem": { ... }
     }
@@ -226,8 +226,8 @@ MFS MCP 服务器工作目录：
 ```bash
 # 任意平台
 python3 -c "
-from mfs.mcp_server import MCPServer
-server = MCPServer(db_path='mfs.db')
+from diting.mcp_server import MCPServer
+server = MCPServer(db_path='diting.db')
 print('✅ MFS MCP 服务器正常')
 server.close()
 "
@@ -252,16 +252,16 @@ npx -y @modelcontextprotocol/server-filesystem --help
 ### 问题 1: MCP 服务器未找到
 
 ```
-Error: MCP server 'mfs-memory' not found
+Error: MCP server 'diting' not found
 ```
 
 **解决**:
 ```bash
 # 检查配置文件
-cat ~/.config/claude/mcp.json | jq '.mcpServers.mfs-memory'
+cat ~/.config/claude/mcp.json | jq '.mcpServers.diting'
 
 # 验证 MFS 路径
-ls -la /root/.openclaw/workspace/projects/mfs-memory/
+ls -la /root/.openclaw/workspace/projects/diting/
 ```
 
 ### 问题 2: 数据库锁定
@@ -273,7 +273,7 @@ sqlite3.OperationalError: database is locked
 **解决**:
 ```bash
 # 检查是否有多个进程
-ps aux | grep mfs.mcp_server
+ps aux | grep diting.mcp_server
 
 # 关闭多余进程
 kill <PID>
@@ -310,4 +310,4 @@ export PATH=$PATH:~/.nvm/versions/node/v22.22.0/bin
 
 **打包负责人**: main (管家)  
 **完成时间**: 2026-04-16  
-**配置文件位置**: `/root/.openclaw/workspace/projects/mfs-memory/mcp-configs/`
+**配置文件位置**: `/root/.openclaw/workspace/projects/diting/mcp-configs/`

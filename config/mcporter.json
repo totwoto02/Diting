@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "mfs-memory": {
-      "command": "python3 -m mfs.mcp_server",
-      "description": "MFS Memory File System - Local MCP Server"
+    "diting": {
+      "command": "python3 -m diting.mcp_server",
+      "description": "Diting Memory File System - Local MCP Server"
     }
   },
   "imports": []

@@ -90,7 +90,7 @@ class S3Storage(StorageBackend):
         Args:
             config: S3 配置 {bucket, region, access_key, secret_key}
         """
-        self.bucket = config.get('bucket', 'mfs-storage')
+        self.bucket = config.get('bucket', 'diting-storage')
         self.region = config.get('region', 'us-east-1')
         self.access_key = config.get('access_key')
         self.secret_key = config.get('secret_key')
@@ -138,7 +138,7 @@ class OSSStorage(StorageBackend):
         Args:
             config: OSS 配置 {bucket, endpoint, access_key_id, access_key_secret}
         """
-        self.bucket = config.get('bucket', 'mfs-storage')
+        self.bucket = config.get('bucket', 'diting-storage')
         self.endpoint = config.get('endpoint', 'oss-cn-hangzhou.aliyuncs.com')
         self.access_key_id = config.get('access_key_id')
         self.access_key_secret = config.get('access_key_secret')
@@ -183,7 +183,7 @@ class StorageManager:
         backend_type = self.config.get('backend', 'local')
         
         if backend_type == 'local':
-            root_path = self.config.get('local', {}).get('root_path', '/tmp/mfs-storage')
+            root_path = self.config.get('local', {}).get('root_path', '/tmp/diting-storage')
             return LocalStorage(root_path)
         
         elif backend_type == 's3':
@@ -196,7 +196,7 @@ class StorageManager:
         
         else:
             # 默认本地存储
-            return LocalStorage('/tmp/mfs-storage')
+            return LocalStorage('/tmp/diting-storage')
     
     def save(self, file_path: str, data: bytes) -> str:
         """保存文件"""

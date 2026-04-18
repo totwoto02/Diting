@@ -1,7 +1,7 @@
 """
-MFS 安装验证工具
+Diting 安装验证工具
 
-用法：mfs-check-install
+用法：diting-check-install
 """
 
 import sys
@@ -18,15 +18,15 @@ def check_python_version():
     return True
 
 
-def check_mfs_import():
+def check_diting_import():
     """检查 MFS 是否可导入"""
     try:
-        from mfs import __version__
-        print(f"MFS 版本：{__version__}")
-        print("✅ MFS 可正常导入")
+        from diting import __version__
+        print(f"Diting 版本：{__version__}")
+        print("✅ Diting 可正常导入")
         return True
     except ImportError as e:
-        print(f"❌ MFS 导入失败：{e}")
+        print(f"❌ Diting 导入失败：{e}")
         return False
 
 
@@ -42,17 +42,17 @@ def check_mcp_registration():
     for config_path in config_paths:
         if os.path.exists(config_path):
             print(f"✅ 找到 OpenClaw MCP 配置文件：{config_path}")
-            # 检查是否包含 mfs-memory
+            # 检查是否包含 diting
             import json
             try:
                 with open(config_path, "r") as f:
                     config = json.load(f)
                 mcp_servers = config.get("mcpServers", {})
-                if "mfs-memory" in mcp_servers:
-                    print("✅ MFS MCP Server 已注册到 OpenClaw")
+                if "diting" in mcp_servers:
+                    print("✅ Diting MCP Server 已注册到 OpenClaw")
                     return True
                 else:
-                    print("⚠️ MFS MCP Server 未注册到 OpenClaw")
+                    print("⚠️ Diting MCP Server 未注册到 OpenClaw")
                     print("   请手动添加配置或重新安装")
                     return False
             except Exception as e:
@@ -90,14 +90,14 @@ def check_dependencies():
 def main():
     """主函数"""
     print("=" * 60)
-    print("MFS 安装验证工具")
+    print("Diting 安装验证工具")
     print("=" * 60)
     print()
     
     checks = [
         ("Python 版本", check_python_version),
         ("依赖检查", check_dependencies),
-        ("MFS 导入", check_mfs_import),
+        ("Diting 导入", check_diting_import),
         ("MCP 注册", check_mcp_registration),
     ]
     
@@ -126,7 +126,7 @@ def main():
         print("🎉 所有检查通过！MFS 已正确安装。")
         print()
         print("使用方法:")
-        print("  1. 在 OpenClaw 中自动识别 mfs_read/mfs_write/mfs_search 工具")
+        print("  1. 在 OpenClaw 中自动识别 diting_read/diting_write/diting_search 工具")
         print("  2. 开始使用 MFS 管理记忆")
         return 0
     else:

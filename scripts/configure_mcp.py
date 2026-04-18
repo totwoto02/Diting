@@ -2,25 +2,25 @@
 """
 MCP 自动配置脚本
 
-用法：python3 scripts/configure_mcp.py [mfs_path]
+用法：python3 scripts/configure_mcp.py [diting_path]
 """
 
 import json
 import os
 import sys
 
-def configure_mcp(mfs_path=None):
+def configure_mcp(diting_path=None):
     """配置 MCP Server"""
     
     # 如果没有提供路径，使用当前目录
-    if mfs_path is None:
-        mfs_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if diting_path is None:
+        diting_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
     # MCP 配置文件路径
     config_path = os.path.expanduser("~/.openclaw/workspace/config/mcporter.json")
     
     print(f"配置 MCP Server...")
-    print(f"  MFS 路径：{mfs_path}")
+    print(f"  Diting 路径：{diting_path}")
     print(f"  配置文件：{config_path}")
     
     # 读取现有配置
@@ -31,21 +31,21 @@ def configure_mcp(mfs_path=None):
         config = {"mcpServers": {}, "imports": []}
     
     # 添加或更新 MFS 配置
-    mfs_config = {
+    diting_config = {
         "description": "MFS Memory File System - Local MCP Server (v0.3.0)",
         "command": "python3",
-        "args": ["-m", "mfs.mcp_server"],
-        "cwd": mfs_path,
+        "args": ["-m", "diting.mcp_server"],
+        "cwd": diting_path,
         "env": {
-            "PYTHONPATH": mfs_path
+            "PYTHONPATH": diting_path
         }
     }
     
-    if "mfs-memory" not in config.get("mcpServers", {}):
-        config.setdefault("mcpServers", {})["mfs-memory"] = mfs_config
+    if "diting" not in config.get("mcpServers", {}):
+        config.setdefault("mcpServers", {})["diting"] = diting_config
         print("  ✅ MFS 配置已添加")
     else:
-        config["mcpServers"]["mfs-memory"] = mfs_config
+        config["mcpServers"]["diting"] = diting_config
         print("  ✅ MFS 配置已更新")
     
     # 保存配置
@@ -59,7 +59,7 @@ def configure_mcp(mfs_path=None):
     try:
         import subprocess
         result = subprocess.run(
-            ["mcporter", "list", "mfs-memory"],
+            ["mcporter", "list", "diting"],
             capture_output=True,
             text=True,
             timeout=10

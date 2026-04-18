@@ -14,13 +14,13 @@ class Config:
         初始化配置
 
         Args:
-            db_path: SQLite 数据库路径，默认为 ~/.mfs/memory.db
+            db_path: SQLite 数据库路径，默认为 ~/.diting/memory.db
         """
         if db_path is None:
             home_dir = Path.home()
-            mfs_dir = home_dir / ".mfs"
-            mfs_dir.mkdir(exist_ok=True)
-            self.db_path = str(mfs_dir / "memory.db")
+            diting_dir = home_dir / ".diting"
+            diting_dir.mkdir(exist_ok=True)
+            self.db_path = str(diting_dir / "memory.db")
         else:
             self.db_path = db_path
 

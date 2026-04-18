@@ -7,7 +7,7 @@
 import json
 import os
 
-FILE_PATH = '/root/.openclaw/workspace/projects/mfs-memory/tests/mock_ultra_long_conversations.json'
+FILE_PATH = '/root/.openclaw/workspace/projects/Diting/tests/mock_ultra_long_conversations.json'
 
 # 加载文件
 with open(FILE_PATH, 'r', encoding='utf-8') as f:

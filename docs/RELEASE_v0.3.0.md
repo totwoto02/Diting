@@ -34,7 +34,7 @@
 **代码变更**:
 ```python
 # MFT 初始化支持 KG
-mft = MFT(db_path='mfs.db', kg_db_path='mfs_kg.db')
+mft = MFT(db_path='diting.db', kg_db_path='diting_kg.db')
 
 # create 时自动建图
 mft.create('/memory/doc', 'NOTE', '内容')
@@ -72,7 +72,7 @@ mft.create('/memory/doc', 'NOTE', '内容')
 
 **对话管理器**:
 ```python
-from mfs.dialog_manager import DialogManager
+from diting.dialog_manager import DialogManager
 
 dm = DialogManager(mft)
 
@@ -243,10 +243,10 @@ mcporter call diting.kg_stats
 ### 4. 对话存储
 
 ```python
-from mfs.mft import MFT
-from mfs.dialog_manager import DialogManager
+from diting.mft import MFT
+from diting.dialog_manager import DialogManager
 
-mft = MFT(db_path='mfs.db', kg_db_path='mfs_kg.db')
+mft = MFT(db_path='diting.db', kg_db_path='diting_kg.db')
 dm = DialogManager(mft)
 
 # 记录对话（热数据区）

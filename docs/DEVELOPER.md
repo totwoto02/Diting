@@ -161,7 +161,7 @@ MCP Server 实现，暴露工具给 AI Agent。
 
 ```python
 import pytest
-from mfs import MFT, DitingInvalidTypeError
+from diting import MFT, DitingInvalidTypeError
 
 def test_create_basic():
     """测试基本创建功能"""
@@ -331,10 +331,10 @@ pytest tests/test_mft.py -v
 pytest tests/test_mft.py::test_create_basic -v
 
 # 运行测试并查看覆盖率
-pytest --cov=mfs --cov-report=html
+pytest --cov=diting --cov-report=html
 
 # 运行测试并查看终端覆盖率报告
-pytest --cov=mfs --cov-report=term-missing
+pytest --cov=diting --cov-report=term-missing
 
 # 运行测试并生成 JUnit 报告
 pytest --junitxml=test-results.xml
@@ -350,18 +350,18 @@ pytest --ff
 
 ```bash
 # 查看总体覆盖率
-pytest --cov=mfs
+pytest --cov=diting
 
 # 查看每个模块的覆盖率
-pytest --cov=mfs --cov-report=term-missing
+pytest --cov=diting --cov-report=term-missing
 
 # 生成 HTML 报告
-pytest --cov=mfs --cov-report=html
+pytest --cov=diting --cov-report=html
 open htmlcov/index.html  # macOS
 xdg-open htmlcov/index.html  # Linux
 
 # 覆盖率要求
-pytest --cov=mfs --cov-fail-under=80
+pytest --cov=diting --cov-fail-under=80
 ```
 
 **覆盖率目标**:
@@ -376,7 +376,7 @@ pytest --cov=mfs --cov-fail-under=80
 
 ```python
 import pytest
-from mfs import MFT
+from diting import MFT
 
 @pytest.fixture
 def mft():
@@ -427,7 +427,7 @@ def test_create(mft):
    pytest -v
    
    # 检查覆盖率
-   pytest --cov=mfs
+   pytest --cov=diting
    ```
 
 6. **提交变更**
@@ -461,7 +461,7 @@ def test_create(mft):
 pip install flake8 black isort
 
 # 检查代码风格
-flake8 mfs/ --max-line-length=100
+flake8 diting/ --max-line-length=100
 
 # 自动格式化
 black mfs/ tests/
@@ -570,10 +570,10 @@ git commit -m "feat(your-feature): implement feature"
 pytest -v
 
 # 检查覆盖率
-pytest --cov=mfs --cov-fail-under=80
+pytest --cov=diting --cov-fail-under=80
 
 # 检查代码风格
-flake8 mfs/
+flake8 diting/
 
 # 合并到 develop
 git checkout develop
@@ -676,7 +676,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Run tests
-        run: pytest --cov=mfs --cov-fail-under=80
+        run: pytest --cov=diting --cov-fail-under=80
       - name: Upload coverage
         uses: codecov/codecov-action@v3
 ```

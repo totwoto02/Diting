@@ -78,10 +78,10 @@
 ### MFT 集成示例
 
 ```python
-from mfs.mft import MFT
+from diting.mft import MFT
 
 # 创建带 KG 的 MFT
-mft = MFT(db_path='mfs.db', kg_db_path='mfs_kg.db')
+mft = MFT(db_path='diting.db', kg_db_path='diting_kg.db')
 
 # 创建记忆（自动建图）
 mft.create('/memory/doc1', 'NOTE', '用户朋友 游戏 游戏角色')

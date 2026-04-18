@@ -19,7 +19,7 @@
 
 **使用示例**：
 ```python
-from mfs.fts5_search import FTS5Search
+from diting.fts5_search import FTS5Search
 
 fts5 = FTS5Search(db_path=":memory:")
 
@@ -52,7 +52,7 @@ results = fts5.search("用户朋友", scope="/test")
 
 **使用示例**：
 ```python
-from mfs.knowledge_graph_v2 import KnowledgeGraphV2
+from diting.knowledge_graph_v2 import KnowledgeGraphV2
 
 kg = KnowledgeGraphV2(db_path=":memory:")
 
@@ -91,7 +91,7 @@ print(expansion["expanded_concepts"])
 
 **使用示例**：
 ```python
-from mfs.assembler_v2 import AssemblerV2, Slice
+from diting.assembler_v2 import AssemblerV2, Slice
 
 assembler = AssemblerV2(db_path=":memory:")
 
@@ -127,7 +127,7 @@ print(f"命中率：{stats['hit_rate']}")
 
 **使用示例**：
 ```python
-from mfs.wal_logger import WALLogger
+from diting.wal_logger import WALLogger
 
 wal = WALLogger(db_path=":memory:")
 
@@ -166,7 +166,7 @@ for a in audit:
 
 **LRU 缓存**：
 ```python
-from mfs.cache import LRUCache
+from diting.cache import LRUCache
 
 cache = LRUCache(capacity=100)
 cache.put("key", "value")
@@ -176,7 +176,7 @@ stats = cache.get_stats()
 
 **连接池**：
 ```python
-from mfs.cache import ConnectionPool
+from diting.cache import ConnectionPool
 
 pool = ConnectionPool(db_path=":memory:", max_connections=10)
 

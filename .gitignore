@@ -24,6 +24,14 @@ wheels/
 .installed.cfg
 *.egg
 
+# Build artifacts
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
 # PyInstaller
 *.manifest
 *.spec

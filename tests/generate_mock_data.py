@@ -457,7 +457,7 @@ def main():
         conv["conversation_id"] = f"conv_{i:03d}"
     
     # 保存到文件
-    output_path = "/root/.openclaw/workspace/projects/mfs-memory/tests/mock_conversations.json"
+    output_path = "/root/.openclaw/workspace/projects/Diting/tests/mock_conversations.json"
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(conversations, f, ensure_ascii=False, indent=2)
     
