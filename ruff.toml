@@ -1,0 +1,22 @@
+# Ruff 配置文件
+# 与 CI 的 flake8 配置保持一致
+
+line-length = 100  # 与 flake8 --max-line-length=100 一致
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+]
+
+ignore = [
+    "E501",  # 行长度由 line-length 控制
+]
+
+[lint.per-file-ignores]
+# 测试文件可以放宽一些限制
+"tests/*" = ["D100", "D101", "D102", "D103"]

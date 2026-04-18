@@ -6,9 +6,9 @@ WAL 日志模块（防幻觉盾牌）
 
 import sqlite3
 import time
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
 from contextlib import contextmanager
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -28,7 +28,7 @@ class WALRecord:
 class WALLogger:
     """
     WAL 日志记录器
-    
+
     防幻觉盾牌核心组件
     """
 
@@ -60,12 +60,12 @@ class WALLogger:
                 version INTEGER DEFAULT 1
             )
         """)
-        
+
         # 索引
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_wal_path ON wal_log(v_path)")
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_wal_timestamp ON wal_log(timestamp)")
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_wal_status ON wal_log(status)")
-        
+
         self.conn.commit()
 
     @contextmanager
@@ -107,18 +107,18 @@ class WALLogger:
             """, (v_path,))
             current_version = cursor.fetchone()[0]
             new_version = current_version + 1
-            
+
             # 插入 WAL 记录
             cursor.execute("""
-                INSERT INTO wal_log 
-                (operation, v_path, content, source_agent, 
+                INSERT INTO wal_log
+                (operation, v_path, content, source_agent,
                  evidence, confidence, timestamp, version, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'COMMITTED')
             """, (
                 operation, v_path, content, source_agent, evidence,
                 confidence, time.time(), new_version
             ))
-            
+
             self.conn.commit()
             return cursor.lastrowid
 
@@ -140,7 +140,7 @@ class WALLogger:
                 WHERE v_path = ?
                 ORDER BY version ASC
             """, (v_path,))
-            
+
             return [
                 {
                     "id": row[0],
@@ -174,7 +174,7 @@ class WALLogger:
                 SET status = 'ROLLED_BACK'
                 WHERE id = ?
             """, (record_id,))
-            
+
             self.conn.commit()
             return cursor.rowcount > 0
 
@@ -196,7 +196,7 @@ class WALLogger:
                 FROM wal_log
                 WHERE v_path = ? AND version = ?
             """, (v_path, version))
-            
+
             row = cursor.fetchone()
             if row:
                 return {
@@ -232,7 +232,7 @@ class WALLogger:
                 ORDER BY version DESC
                 LIMIT 1
             """, (v_path,))
-            
+
             row = cursor.fetchone()
             if row:
                 return {
@@ -267,7 +267,7 @@ class WALLogger:
                 ORDER BY timestamp DESC
                 LIMIT ?
             """, (limit,))
-            
+
             return [
                 {
                     "id": row[0],
@@ -289,11 +289,11 @@ class WALLogger:
         if self.conn:
             self.conn.close()
             self.conn = None
-    
+
     def log_batch(self, operations: List[Dict]) -> List[int]:
         """
         批量记录操作（使用事务，性能提升 5-10 倍）
-        
+
         Args:
             operations: 操作列表，每项包含：
                 - operation: 操作类型
@@ -302,20 +302,20 @@ class WALLogger:
                 - source_agent: 来源 Agent
                 - evidence: 证据（可选）
                 - confidence: 置信度（可选，默认 1.0）
-        
+
         Returns:
             记录 ID 列表
         """
         if not operations:
             return []
-        
+
         # 使用事务批量写入
         self.conn.execute("BEGIN TRANSACTION")
         try:
             ids = []
             for op in operations:
                 cursor = self.conn.execute("""
-                    INSERT INTO wal_log 
+                    INSERT INTO wal_log
                     (operation, v_path, content, source_agent, evidence, confidence, timestamp, version, status)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'COMMITTED')
                 """, (
@@ -329,19 +329,19 @@ class WALLogger:
                     1  # 版本号（简化处理）
                 ))
                 ids.append(cursor.lastrowid)
-            
+
             self.conn.commit()
             return ids
-            
+
         except Exception as e:
             self.conn.rollback()
             raise e
-    
+
     @contextmanager
     def batch_context(self):
         """
         批量写入上下文管理器
-        
+
         Usage:
             with wal_logger.batch_context() as batch:
                 batch.add('CREATE', '/path', 'content', 'agent')
@@ -356,16 +356,16 @@ class BatchWriter:
     """
     批量写入器（配合 batch_context 使用）
     """
-    
+
     def __init__(self, wal_logger: WALLogger):
         self.wal_logger = wal_logger
         self.operations = []
-    
+
     def add(self, operation: str, v_path: str, content: str,
             source_agent: str, evidence: str = "", confidence: float = 1.0):
         """
         添加一个操作到批量队列
-        
+
         Args:
             operation: 操作类型
             v_path: 虚拟路径
@@ -382,11 +382,11 @@ class BatchWriter:
             'evidence': evidence,
             'confidence': confidence
         })
-    
+
     def commit(self) -> List[int]:
         """
         提交批量写入
-        
+
         Returns:
             记录 ID 列表
         """
