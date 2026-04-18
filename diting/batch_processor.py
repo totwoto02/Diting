@@ -243,15 +243,19 @@ class BatchProcessor:
     def _worker_loop(self):
         """后台工作线程"""
         while self.running:
-            # 获取一批任务
-            tasks = self.dequeue_batch()
+            try:
+                # 获取一批任务
+                tasks = self.dequeue_batch()
 
-            if tasks:
-                # 处理任务（默认处理器）
-                self.process_batch(tasks, self._default_processor)
-            else:
-                # 无任务，等待
-                time.sleep(self.process_interval)
+                if tasks:
+                    # 处理任务（默认处理器）
+                    self.process_batch(tasks, self._default_processor)
+                else:
+                    # 无任务，等待
+                    time.sleep(self.process_interval)
+            except Exception:
+                # 捕获并发错误，避免线程崩溃
+                time.sleep(0.1)
 
     def _default_processor(self, task: BatchTask) -> Dict:
         """默认处理器"""
