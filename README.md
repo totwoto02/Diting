@@ -113,16 +113,139 @@ mft.delete("/user/preferences")
 | **热度 (H) / Heat** | 热度评分 / Heat Score | 近期访问频率 (0-100) / Recent access frequency (0-100) |
 | **温度 (T) / Temperature** | 关联度 / Relevance | 与当前上下文的关联程度 / Relevance to current context |
 | **熵 (S) / Entropy** | 争议性 / Controversy | 矛盾/不确定性水平 / Contradiction/uncertainty level |
-| **自由能 (G) / Free Energy** | 有效性 / Validity | G = U - TS，决定记忆能否被提取 / Determines if memory can be extracted |
+| **内能 (U) / Internal Energy** | 访问次数 / Access Count | 记忆被访问的总次数（积累的能量）/ Total accesses (accumulated energy) |
+| **热度 (H) / Heat** | 热度评分 / Heat Score | 近期访问频率，U 的 0-100 标准化 / Recent access frequency, 0-100 normalized U |
+| **温度 (T) / Temperature** | 关联度 / Relevance | 与当前上下文的关联程度 (0-1) / Relevance to current context (0-1) |
+| **熵 (S) / Entropy** | 争议性 / Controversy | 矛盾/不确定性水平 (0-1) / Contradiction/uncertainty level (0-1) |
+| **自由能 (G) / Free Energy** | 有效性 / Validity | G = U - TS，决定记忆能否被提取 / G = U - TS, determines if memory can be extracted |
+
+### 四系统详解 / Four Systems Explained
+
+#### 1️⃣ 内能系统（U - Access Count）
+
+**物理类比 / Physical Analogy:** 物体内部的总能量
+
+**技术实现 / Implementation:** `diting/heat_manager.py`
+
+**计算公式 / Formula:**
+```
+U = 基础分 + 访问次数 × 权重 + 时间衰减
+```
+
+**应用场景 / Use Cases:**
+- 追踪记忆被访问的总次数
+- 计算热度评分（0-100）
+- 支持时间衰减和轮次衰减
+- 用户主动升温（增加 U）
+
+---
+
+#### 2️⃣ 温度系统（T - Relevance）
+
+**物理类比 / Physical Analogy:** 热量传递的驱动力（温差）
+
+**技术实现 / Implementation:** `diting/free_energy_manager.py` 中的 `_calculate_relevance()`
+
+**计算公式 / Formula:**
+```
+T = BM25 评分 × 0.7 + 路径匹配 × 0.3
+T ∈ [0, 1]
+```
+
+**应用场景 / Use Cases:**
+- 计算记忆与当前上下文的关联度
+- 使用 SQLite FTS5 BM25 算法
+- 路径匹配作为补充
+- 决定记忆是否应该被提取到当前上下文
+
+---
+
+#### 3️⃣ 熵系统（S - Controversy）
+
+**物理类比 / Physical Analogy:** 系统的混乱程度
+
+**技术实现 / Implementation:** `diting/entropy_manager.py`
+
+**计算公式 / Formula:**
+```
+S = 矛盾检测分数 × 权重 + 不确定性 × 权重
+S ∈ [0, 1]
+```
+
+**应用场景 / Use Cases:**
+- 检测记忆之间的矛盾
+- 标记高争议性记忆
+- 防止 AI 幻觉（高熵记忆需谨慎使用）
+- WAL 审计日志追踪熵变
+
+---
+
+#### 4️⃣ 自由能系统（G - Validity）
+
+**物理类比 / Physical Analogy:** 系统能够做"有用功"的能量
+
+**技术实现 / Implementation:** `diting/free_energy_manager.py`
+
+**核心公式 / Core Formula:**
+```
+G = U - T × S × 100
+
+其中：
+- U: 内能（0-100）
+- T: 温度/关联度（0-1）
+- S: 熵/争议性（0-1）
+- 100: 量纲转换系数
+```
+
+**物理意义 / Physical Meaning:**
+- **G > 0**: 记忆可被提取并影响决策
+- **G < 0**: 记忆虽存在但被抑制（不应使用）
+- **G = 0**: 临界状态
+
+**应用场景 / Use Cases:**
+- 决定记忆能否被提取到当前上下文
+- 批量计算记忆的有效性
+- 系统状态分析（活跃/稳定/抑制）
+- 冻结/解冻记忆管理
+
+---
 
 ### 记忆状态 / Memory States
 
+#### 热度状态（内能 U）/ Heat States (Internal Energy U)
+
 | 状态 / State | 热度评分 / Heat Score | 说明 / Description |
 |------|---------|------|
-| 🔥 **热 / Hot** | 70-100 | 频繁访问，高优先级 / Frequent access, high priority |
+| 🔥 **热 / Hot** | 70-100 | 频繁访问，高内能 / Frequent access, high internal energy |
 | 🌤️ **温 / Warm** | 40-69 | 中等访问频率 / Moderate access frequency |
-| ❄️ **冷 / Cold** | 10-39 | 很少访问 / Rare access |
-| 🧊 **冻 / Frozen** | 0-9 | 明确废弃/低有效性 / Explicitly废弃/low validity |
+| ❄️ **冷 / Cold** | 10-39 | 很少访问，低内能 / Rare access, low internal energy |
+| 🧊 **冻 / Frozen** | 0-9 | 明确废弃/负自由能 / Explicitly废弃/negative free energy |
+
+#### 温度状态（关联度 T）/ Temperature States (Relevance T)
+
+| 状态 / State | 温度评分 / Temp Score | 说明 / Description |
+|------|---------|------|
+| 🔥 **高关联 / High** | 0.7-1.0 | 与当前上下文高度相关 / Highly relevant to current context |
+| 🌤️ **中关联 / Medium** | 0.4-0.69 | 部分相关 / Partially relevant |
+| ❄️ **低关联 / Low** | 0.1-0.39 | 关联度低 / Low relevance |
+| 🧊 **无关联 / None** | 0.0-0.09 | 与当前上下文无关 / Irrelevant to current context |
+
+#### 熵状态（争议性 S）/ Entropy States (Controversy S)
+
+| 状态 / State | 熵值 / Entropy Score | 说明 / Description |
+|------|---------|------|
+| ✅ **低熵 / Low** | 0.0-0.3 | 信息一致，无矛盾 / Consistent information, no contradiction |
+| ⚠️ **中熵 / Medium** | 0.4-0.69 | 存在部分矛盾 / Some contradictions exist |
+| ❌ **高熵 / High** | 0.7-1.0 | 严重矛盾，需澄清 / Serious contradictions, needs clarification |
+
+#### 自由能状态（有效性 G）/ Free Energy States (Validity G)
+
+| 状态 / State | 自由能 / Free Energy | 说明 / Description |
+|------|---------|------|
+| 🚀 **可提取 / Extractable** | G > 50 | 高有效性，优先提取 / High validity, priority extraction |
+| ✅ **可用 / Available** | 0 < G ≤ 50 | 可被提取和使用 / Can be extracted and used |
+| ⚠️ **临界 / Critical** | G ≈ 0 | 临界状态，可能不稳定 / Critical state, may be unstable |
+| 🔒 **抑制 / Inhibited** | G < 0 | 自由能为负，不应提取 / Negative free energy, should not extract |
 
 ---
 
@@ -178,12 +301,38 @@ pytest tests/ --cov=diting --cov-report=html
 
 ## 📖 文档 / Documentation
 
+### 快速开始 / Quick Start
+
+| 文档 / Document | 说明 / Description |
+|------|------|
+| [QUICKSTART.md](docs/QUICKSTART.md) | 快速入门 / Quick Start |
+| [INSTALL.md](docs/INSTALL.md) | 安装指南 / Installation Guide |
+| [AGENT_INSTALL.md](docs/AGENT_INSTALL.md) | AI Agent 安装引导 / AI Agent Installation Guide |
+
+### 技术文档 / Technical Documentation
+
 | 文档 / Document | 说明 / Description |
 |------|------|
 | [API.md](docs/API.md) | 完整 API 参考 / Complete API Reference |
 | [DEVELOPER.md](docs/DEVELOPER.md) | 开发者指南 / Developer Guide |
-| [INSTALL.md](docs/INSTALL.md) | 安装指南 / Installation Guide |
-| [QUICKSTART.md](docs/QUICKSTART.md) | 快速入门 / Quick Start |
+| [MFS_COMPLETE_DESCRIPTION.md](docs/MFS_COMPLETE_DESCRIPTION.md) | MFS 完整描述 / Complete MFS Description |
+| [ENTROPY_SYSTEM_COMPLETE.md](docs/ENTROPY_SYSTEM_COMPLETE.md) | 熵系统详解 / Entropy System Details |
+
+### MCP 集成 / MCP Integration
+
+| 文档 / Document | 说明 / Description |
+|------|------|
+| [MCP_KG_TOOLS_USAGE.md](docs/MCP_KG_TOOLS_USAGE.md) | MCP 知识图谱工具使用 / MCP KG Tools Usage |
+| [AI_AGENT_SETUP_GUIDE.md](docs/AI_AGENT_SETUP_GUIDE.md) | AI Agent 设置指南 / AI Agent Setup Guide |
+
+### 部署与发布 / Deployment & Release
+
+| 文档 / Document | 说明 / Description |
+|------|------|
+| [DEPLOY.md](docs/DEPLOY.md) | 部署指南 / Deployment Guide |
+| [PUBLISH_GUIDE.md](docs/PUBLISH_GUIDE.md) | 发布指南 / Publish Guide |
+| [RELEASE.md](docs/RELEASE.md) | 发布流程 / Release Process |
+| [GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md) | Git 工作流 / Git Workflow |
 
 ---
 
