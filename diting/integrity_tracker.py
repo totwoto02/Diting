@@ -112,7 +112,7 @@ class IntegrityTracker:
             "old_hash": old_hash,
             "new_hash": new_hash,
             "diff_chars": diff_chars,
-            "change_rate": f"{diff_chars/max(len(old_content),1)*100:.1f}%",
+            "change_rate": f"{diff_chars/max(len(old_content), 1)*100:.1f}%",
             "timestamp": datetime.now().isoformat()
         }
 
