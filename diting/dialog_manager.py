@@ -8,7 +8,8 @@
 """
 
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from .mft import MFT
 
 
@@ -77,7 +78,7 @@ class DialogManager:
         """
         import time
         paths = []
-        for i, msg in enumerate(messages):
+        for _i, msg in enumerate(messages):
             # 每条消息间隔 1ms 避免冲突
             time.sleep(0.001)
             path = self.add_dialog(

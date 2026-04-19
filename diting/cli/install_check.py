@@ -4,8 +4,8 @@ Diting 安装验证工具
 用法：diting-check-install
 """
 
-import sys
 import os
+import sys
 
 
 def check_python_version():

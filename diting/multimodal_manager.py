@@ -4,14 +4,14 @@ MFS 多模态记忆管理器
 支持图片和语音的存储、AI 概括生成、可搜索
 """
 
-import os
-import json
-import uuid
 import hashlib
+import json
+import os
 import sqlite3
+import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
 from pathlib import Path
+from typing import Dict, List, Optional
 
 
 class MultimodalMemoryManager:

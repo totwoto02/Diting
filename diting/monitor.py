@@ -5,11 +5,12 @@
 """
 
 import sqlite3
-import psutil
-from datetime import datetime
-from typing import Dict, List
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Dict, List
+
+import psutil
 
 
 class AlertLevel(Enum):
@@ -308,8 +309,8 @@ class MonitorDashboard:
 
 # 使用示例
 if __name__ == '__main__':
-    import tempfile
     import os
+    import tempfile
 
     # 创建测试数据库
     db_fd, db_path = tempfile.mkstemp(suffix='.db')

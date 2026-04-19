@@ -4,14 +4,14 @@
 优化批量操作性能，降低 API 成本
 """
 
-import sqlite3
-import time
-import threading
-from datetime import datetime
-from typing import Dict, List, Callable, Optional
-from dataclasses import dataclass
-from queue import PriorityQueue
 import json
+import sqlite3
+import threading
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from queue import PriorityQueue
+from typing import Callable, Dict, List, Optional
 
 
 @dataclass
@@ -319,8 +319,8 @@ class BatchProcessor:
 
 # 使用示例
 if __name__ == '__main__':
-    import tempfile
     import os
+    import tempfile
 
     # 创建测试数据库
     db_fd, db_path = tempfile.mkstemp(suffix='.db')

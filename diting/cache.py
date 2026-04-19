@@ -6,10 +6,10 @@
 
 import sqlite3
 import threading
-from typing import Any, Optional, Dict, List
 from collections import OrderedDict
 from contextlib import contextmanager
-from queue import Queue, Empty
+from queue import Empty, Queue
+from typing import Any, Dict, List, Optional
 
 
 class LRUCache:

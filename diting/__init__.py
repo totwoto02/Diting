@@ -18,8 +18,8 @@ __release_date__ = "2026-04-16"
 __author__ = "main (管家)"
 __description__ = "AI 记忆的 Git + NTFS - 全面优化版"
 
-from .mft import MFT
-from .database import Database
 from .config import Config
+from .database import Database
+from .mft import MFT
 
 __all__ = ["MFT", "Database", "Config"]

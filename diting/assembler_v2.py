@@ -4,9 +4,9 @@ Assembler V2 - 优化的拼装器
 支持智能去重、重叠检测、质量评分
 """
 
-from typing import List, Dict, Any, Optional, Tuple
-from difflib import SequenceMatcher
 from dataclasses import dataclass
+from difflib import SequenceMatcher
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass

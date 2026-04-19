@@ -4,7 +4,8 @@ MCP Server KG 工具实现
 添加到 mcp_server.py 中的 KG 工具方法
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
+
 from mcp.types import TextContent
 
 # ========== Phase 2: KG 工具实现 ==========

@@ -15,11 +15,10 @@
 预留接口：温度系统、熵系统、自由能系统
 """
 
-import sqlite3
 import json
+import sqlite3
 from datetime import datetime
 from typing import Dict, List, Optional
-
 
 # 热度评分说明（0-100 数值，代表内能 U 的代理）
 # 🔥 高热度区：70-100 (频繁访问/高内能)
@@ -516,8 +515,8 @@ class HeatManager:
 
 # 使用示例
 if __name__ == '__main__':
-    import tempfile
     import os
+    import tempfile
 
     # 创建测试数据库
     db_fd, db_path = tempfile.mkstemp(suffix='.db')

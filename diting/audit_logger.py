@@ -4,12 +4,12 @@
 完整记录系统操作，支持审计和故障排查
 """
 
-import sqlite3
-import json
 import csv
 import io
-from typing import Dict, List
+import json
+import sqlite3
 from enum import Enum
+from typing import Dict, List
 
 
 class LogLevel(Enum):
@@ -354,8 +354,8 @@ class AuditLogger:
 
 # 使用示例
 if __name__ == '__main__':
-    import tempfile
     import os
+    import tempfile
 
     # 创建测试数据库
     db_fd, db_path = tempfile.mkstemp(suffix='.db')

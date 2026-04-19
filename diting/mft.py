@@ -4,14 +4,14 @@ MFT (Master File Table) 管理器
 MFS 的核心数据结构，类似 NTFS 的 MFT，记录所有记忆的元数据
 """
 
-from datetime import datetime
-from typing import Optional, List, Dict, Any
-from collections import OrderedDict
-import threading
 import re
+import threading
+from collections import OrderedDict
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from .database import Database
 from .config import Config
+from .database import Database
 from .errors import MFTInvalidPathError
 
 # 延迟导入知识图谱（避免循环依赖）

@@ -5,7 +5,7 @@ FTS5 全文检索模块
 """
 
 import sqlite3
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 
 class FTS5Search:

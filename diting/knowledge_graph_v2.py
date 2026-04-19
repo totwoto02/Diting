@@ -4,12 +4,12 @@
 支持多层级关联、智能权重、概念别名、时间衰减
 """
 
-import sqlite3
 import json
+import sqlite3
 import time
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
 from contextlib import contextmanager
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

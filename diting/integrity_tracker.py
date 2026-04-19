@@ -5,9 +5,9 @@
 """
 
 import hashlib
-from datetime import datetime
-from typing import Dict, Any, List
 import sqlite3
+from datetime import datetime
+from typing import Any, Dict, List
 
 
 class IntegrityTracker:
@@ -103,7 +103,7 @@ class IntegrityTracker:
         self.conn.commit()
 
         # 计算变更统计
-        diff_chars = sum(1 for a, b in zip(old_content, new_content) if a != b)
+        diff_chars = sum(1 for a, b in zip(old_content, new_content, strict=False) if a != b)
         diff_chars += abs(len(new_content) - len(old_content))
 
         return {

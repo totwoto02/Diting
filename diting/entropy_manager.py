@@ -5,12 +5,12 @@
 随着方案确定，应该熵减
 """
 
-import sqlite3
 import json
 import re
+import sqlite3
 from datetime import datetime
-from typing import Dict, List, Optional
 from enum import Enum
+from typing import Dict, List, Optional
 
 
 class EntropyLevel(Enum):
@@ -496,8 +496,8 @@ class EntropyManager:
 
 # 使用示例
 if __name__ == '__main__':
-    import tempfile
     import os
+    import tempfile
 
     # 创建测试数据库
     db_fd, db_path = tempfile.mkstemp(suffix='.db')

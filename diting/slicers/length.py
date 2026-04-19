@@ -4,8 +4,8 @@
 将长文本自动切分为多个切片，每个切片 500-2000 字
 """
 
-from typing import List, Dict, Any
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
 
 @dataclass

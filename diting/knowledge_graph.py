@@ -5,10 +5,10 @@
 """
 
 import json
-import re
 import os
-from typing import Dict, List, Any, Optional
+import re
 from collections import defaultdict
+from typing import Any, Dict, List, Optional
 
 
 class KnowledgeGraph:

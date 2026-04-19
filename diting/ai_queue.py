@@ -4,16 +4,16 @@
 实现外卖平台模式：用户上传 → 立即返回 → 后台处理 → 完成通知
 """
 
-import os
 import json
-import uuid
+import os
 import sqlite3
 import threading
 import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Callable
+import uuid
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Callable, Dict, List, Optional
 
 
 class TaskStatus(Enum):

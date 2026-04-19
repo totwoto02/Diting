@@ -3,8 +3,8 @@ SQLite 连接管理模块
 """
 
 import sqlite3
-from typing import Optional
 from contextlib import contextmanager
+from typing import Optional
 
 from .config import Config
 

@@ -4,7 +4,8 @@
 将多个切片拼装还原为完整文本
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from diting.mft import MFT
 
 
