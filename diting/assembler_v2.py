@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 @dataclass
 class Slice:
     """切片数据结构"""
+
     chunk_id: int
     offset: int
     length: int
@@ -24,25 +25,25 @@ class Slice:
 
     def get(self, key: str, default=None):
         """兼容字典访问"""
-        if key == 'content':
+        if key == "content":
             return self.content
-        elif key == 'offset':
+        elif key == "offset":
             return self.offset
-        elif key == 'length':
+        elif key == "length":
             return self.length
-        elif key == 'chunk_id':
+        elif key == "chunk_id":
             return self.chunk_id
         return default
 
     def __getitem__(self, key: str):
         """支持下标访问"""
-        if key == 'content':
+        if key == "content":
             return self.content
-        elif key == 'offset':
+        elif key == "offset":
             return self.offset
-        elif key == 'length':
+        elif key == "length":
             return self.length
-        elif key == 'chunk_id':
+        elif key == "chunk_id":
             return self.chunk_id
         raise KeyError(key)
 
@@ -61,8 +62,7 @@ class AssemblerV2:
         self.overlap_threshold = overlap_threshold
         self.min_overlap = min_overlap
 
-    def assemble_with_dedup(
-            self, slices: List[Dict[str, Any]]) -> Tuple[str, Dict]:
+    def assemble_with_dedup(self, slices: List[Dict[str, Any]]) -> Tuple[str, Dict]:
         """
         拼装切片并去重
 
@@ -76,7 +76,7 @@ class AssemblerV2:
             return "", {"chunk_count": 0, "dedup_chars": 0}
 
         # 按 offset 排序
-        sorted_slices = sorted(slices, key=lambda x: x.get('offset', 0))
+        sorted_slices = sorted(slices, key=lambda x: x.get("offset", 0))
 
         # 合并重叠部分
         merged = []
@@ -93,26 +93,28 @@ class AssemblerV2:
                     # 有重叠，去重
                     dedup_chars += overlap
                     # 只添加不重叠的部分
-                    new_content = slice['content'][overlap:]
+                    new_content = slice["content"][overlap:]
                     if new_content:
-                        merged.append({
-                            'content': new_content,
-                            'offset': slice['offset'],
-                            'length': len(new_content)
-                        })
+                        merged.append(
+                            {
+                                "content": new_content,
+                                "offset": slice["offset"],
+                                "length": len(new_content),
+                            }
+                        )
                 else:
                     # 无重叠，直接添加
                     merged.append(slice)
 
         # 拼装最终文本
-        full_text = ''.join(s['content'] for s in merged)
+        full_text = "".join(s["content"] for s in merged)
 
         stats = {
             "chunk_count": len(slices),
             "merged_chunks": len(merged),
             "dedup_chars": dedup_chars,
-            "original_length": sum(s.get('length', len(s['content'])) for s in slices),
-            "final_length": len(full_text)
+            "original_length": sum(s.get("length", len(s["content"])) for s in slices),
+            "final_length": len(full_text),
         }
 
         return full_text, stats
@@ -128,8 +130,8 @@ class AssemblerV2:
         Returns:
             重叠字符数
         """
-        content1 = slice1.get('content', '')
-        content2 = slice2.get('content', '')
+        content1 = slice1.get("content", "")
+        content2 = slice2.get("content", "")
 
         # 获取可能的重叠区域
         end1 = content1[-100:] if len(content1) > 100 else content1
@@ -137,10 +139,7 @@ class AssemblerV2:
 
         # 使用序列匹配检测重叠
         matcher = SequenceMatcher(None, end1, start2)
-        match = matcher.find_longest_match(
-            0, len(end1),
-            0, len(start2)
-        )
+        match = matcher.find_longest_match(0, len(end1), 0, len(start2))
 
         if match.size >= self.min_overlap:
             # 计算重叠比例
@@ -150,11 +149,9 @@ class AssemblerV2:
 
         return 0
 
-    def assemble_with_quality(self,
-                              slices: List[Dict[str,
-                                                Any]],
-                              expected_length: Optional[int] = None) -> Dict[str,
-                                                                             Any]:
+    def assemble_with_quality(
+        self, slices: List[Dict[str, Any]], expected_length: Optional[int] = None
+    ) -> Dict[str, Any]:
         """
         拼装并评估质量
 
@@ -172,12 +169,12 @@ class AssemblerV2:
         issues = []
 
         # 检查 1: 是否有去重
-        if stats['dedup_chars'] > 0:
+        if stats["dedup_chars"] > 0:
             quality_score -= 5
             issues.append(f"检测到 {stats['dedup_chars']} 字符重复")
 
         # 检查 2: 切片数量是否合理
-        if stats['chunk_count'] > 20:
+        if stats["chunk_count"] > 20:
             quality_score -= 10
             issues.append(f"切片数量过多 ({stats['chunk_count']} 片)")
 
@@ -198,7 +195,7 @@ class AssemblerV2:
             "stats": stats,
             "quality_score": quality_score,
             "issues": issues,
-            "is_complete": quality_score >= 80
+            "is_complete": quality_score >= 80,
         }
 
     def _detect_gaps(self, slices: List[Dict[str, Any]]) -> bool:
@@ -206,15 +203,14 @@ class AssemblerV2:
         if len(slices) < 2:
             return False
 
-        sorted_slices = sorted(slices, key=lambda x: x.get('offset', 0))
+        sorted_slices = sorted(slices, key=lambda x: x.get("offset", 0))
 
         for i in range(1, len(sorted_slices)):
             prev = sorted_slices[i - 1]
             curr = sorted_slices[i]
 
-            prev_end = prev.get('offset', 0) + \
-                prev.get('length', len(prev.get('content', '')))
-            curr_start = curr.get('offset', 0)
+            prev_end = prev.get("offset", 0) + prev.get("length", len(prev.get("content", "")))
+            curr_start = curr.get("offset", 0)
 
             # 检查是否有间隙
             if curr_start > prev_end + 10:  # 允许 10 字符误差
@@ -222,8 +218,7 @@ class AssemblerV2:
 
         return False
 
-    def verify_integrity(self, assembled: str,
-                         original: str) -> Dict[str, Any]:
+    def verify_integrity(self, assembled: str, original: str) -> Dict[str, Any]:
         """
         验证拼装完整性
 
@@ -239,7 +234,7 @@ class AssemblerV2:
         similarity = matcher.ratio()
 
         # 检测差异
-        diff_count = sum(1 for op in matcher.get_opcodes() if op[0] != 'equal')
+        diff_count = sum(1 for op in matcher.get_opcodes() if op[0] != "equal")
 
         return {
             "similarity": similarity * 100,
@@ -247,7 +242,7 @@ class AssemblerV2:
             "is_identical": assembled == original,
             "is_acceptable": similarity >= 0.95,
             "missing_chars": len(original) - len(assembled),
-            "extra_chars": len(assembled) - len(original)
+            "extra_chars": len(assembled) - len(original),
         }
 
     def close(self):
@@ -256,21 +251,18 @@ class AssemblerV2:
 
     def cache_slice(self, slice_id: str, content: str):
         """缓存切片（简化实现）"""
-        if not hasattr(self, '_cache'):
+        if not hasattr(self, "_cache"):
             self._cache = {}
         self._cache[slice_id] = content
 
     def get_cached_slice(self, slice_id: str) -> str:
         """获取缓存的切片"""
-        if not hasattr(self, '_cache'):
+        if not hasattr(self, "_cache"):
             self._cache = {}
         return self._cache.get(slice_id)
 
     def get_cache_stats(self) -> dict:
         """获取缓存统计"""
-        if not hasattr(self, '_cache'):
+        if not hasattr(self, "_cache"):
             self._cache = {}
-        return {
-            'size': len(self._cache),
-            'keys': list(self._cache.keys())
-        }
+        return {"size": len(self._cache), "keys": list(self._cache.keys())}

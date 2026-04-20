@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class WALRecord:
     """WAL 记录数据结构"""
+
     id: int
     operation: str
     v_path: str
@@ -62,12 +63,9 @@ class WALLogger:
         """)
 
         # 索引
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_wal_path ON wal_log(v_path)")
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_wal_timestamp ON wal_log(timestamp)")
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_wal_status ON wal_log(status)")
+        self.conn.execute("CREATE INDEX IF NOT EXISTS idx_wal_path ON wal_log(v_path)")
+        self.conn.execute("CREATE INDEX IF NOT EXISTS idx_wal_timestamp ON wal_log(timestamp)")
+        self.conn.execute("CREATE INDEX IF NOT EXISTS idx_wal_status ON wal_log(status)")
 
         self.conn.commit()
 
@@ -87,7 +85,7 @@ class WALLogger:
         content: str,
         source_agent: str,
         evidence: str,
-        confidence: float = 1.0
+        confidence: float = 1.0,
     ) -> int:
         """
         记录操作到 WAL 日志
@@ -105,22 +103,34 @@ class WALLogger:
         """
         with self.get_cursor() as cursor:
             # 获取当前版本号
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT COALESCE(MAX(version), 0) FROM wal_log WHERE v_path = ?
-            """, (v_path,))
+            """,
+                (v_path,),
+            )
             current_version = cursor.fetchone()[0]
             new_version = current_version + 1
 
             # 插入 WAL 记录
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO wal_log
                 (operation, v_path, content, source_agent,
                  evidence, confidence, timestamp, version, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'COMMITTED')
-            """, (
-                operation, v_path, content, source_agent, evidence,
-                confidence, time.time(), new_version
-            ))
+            """,
+                (
+                    operation,
+                    v_path,
+                    content,
+                    source_agent,
+                    evidence,
+                    confidence,
+                    time.time(),
+                    new_version,
+                ),
+            )
 
             self.conn.commit()
             return cursor.lastrowid
@@ -136,13 +146,16 @@ class WALLogger:
             历史记录列表
         """
         with self.get_cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, operation, v_path, content, source_agent, evidence,
                        confidence, timestamp, status, version
                 FROM wal_log
                 WHERE v_path = ?
                 ORDER BY version ASC
-            """, (v_path,))
+            """,
+                (v_path,),
+            )
 
             return [
                 {
@@ -155,7 +168,7 @@ class WALLogger:
                     "confidence": row[6],
                     "timestamp": row[7],
                     "status": row[8],
-                    "version": row[9]
+                    "version": row[9],
                 }
                 for row in cursor.fetchall()
             ]
@@ -172,17 +185,19 @@ class WALLogger:
         """
         with self.get_cursor() as cursor:
             # 标记为回滚
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE wal_log
                 SET status = 'ROLLED_BACK'
                 WHERE id = ?
-            """, (record_id,))
+            """,
+                (record_id,),
+            )
 
             self.conn.commit()
             return cursor.rowcount > 0
 
-    def get_version(self, v_path: str,
-                    version: int) -> Optional[Dict[str, Any]]:
+    def get_version(self, v_path: str, version: int) -> Optional[Dict[str, Any]]:
         """
         获取指定版本
 
@@ -194,12 +209,15 @@ class WALLogger:
             版本信息，未找到返回 None
         """
         with self.get_cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, operation, v_path, content, source_agent, evidence,
                        confidence, timestamp, status, version
                 FROM wal_log
                 WHERE v_path = ? AND version = ?
-            """, (v_path, version))
+            """,
+                (v_path, version),
+            )
 
             row = cursor.fetchone()
             if row:
@@ -213,7 +231,7 @@ class WALLogger:
                     "confidence": row[6],
                     "timestamp": row[7],
                     "status": row[8],
-                    "version": row[9]
+                    "version": row[9],
                 }
             return None
 
@@ -228,14 +246,17 @@ class WALLogger:
             最新版本信息，未找到返回 None
         """
         with self.get_cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, operation, v_path, content, source_agent, evidence,
                        confidence, timestamp, status, version
                 FROM wal_log
                 WHERE v_path = ?
                 ORDER BY version DESC
                 LIMIT 1
-            """, (v_path,))
+            """,
+                (v_path,),
+            )
 
             row = cursor.fetchone()
             if row:
@@ -249,7 +270,7 @@ class WALLogger:
                     "confidence": row[6],
                     "timestamp": row[7],
                     "status": row[8],
-                    "version": row[9]
+                    "version": row[9],
                 }
             return None
 
@@ -264,13 +285,16 @@ class WALLogger:
             审计追踪列表
         """
         with self.get_cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, operation, v_path, content, source_agent, evidence,
                        confidence, timestamp, status, version
                 FROM wal_log
                 ORDER BY timestamp DESC
                 LIMIT ?
-            """, (limit,))
+            """,
+                (limit,),
+            )
 
             return [
                 {
@@ -283,7 +307,7 @@ class WALLogger:
                     "confidence": row[6],
                     "timestamp": row[7],
                     "status": row[8],
-                    "version": row[9]
+                    "version": row[9],
                 }
                 for row in cursor.fetchall()
             ]
@@ -318,21 +342,24 @@ class WALLogger:
         try:
             ids = []
             for op in operations:
-                cursor = self.conn.execute("""
+                cursor = self.conn.execute(
+                    """
                     INSERT INTO wal_log
                     (operation, v_path, content, source_agent,
                      evidence, confidence, timestamp, version, status)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'COMMITTED')
-                """, (
-                    op['operation'],
-                    op['v_path'],
-                    op['content'],
-                    op['source_agent'],
-                    op.get('evidence', ''),
-                    op.get('confidence', 1.0),
-                    time.time(),
-                    1  # 版本号（简化处理）
-                ))
+                """,
+                    (
+                        op["operation"],
+                        op["v_path"],
+                        op["content"],
+                        op["source_agent"],
+                        op.get("evidence", ""),
+                        op.get("confidence", 1.0),
+                        time.time(),
+                        1,  # 版本号（简化处理）
+                    ),
+                )
                 ids.append(cursor.lastrowid)
 
             self.conn.commit()
@@ -366,8 +393,15 @@ class BatchWriter:
         self.wal_logger = wal_logger
         self.operations = []
 
-    def add(self, operation: str, v_path: str, content: str,
-            source_agent: str, evidence: str = "", confidence: float = 1.0):
+    def add(
+        self,
+        operation: str,
+        v_path: str,
+        content: str,
+        source_agent: str,
+        evidence: str = "",
+        confidence: float = 1.0,
+    ):
         """
         添加一个操作到批量队列
 
@@ -379,14 +413,16 @@ class BatchWriter:
             evidence: 证据（可选）
             confidence: 置信度（可选）
         """
-        self.operations.append({
-            'operation': operation,
-            'v_path': v_path,
-            'content': content,
-            'source_agent': source_agent,
-            'evidence': evidence,
-            'confidence': confidence
-        })
+        self.operations.append(
+            {
+                "operation": operation,
+                "v_path": v_path,
+                "content": content,
+                "source_agent": source_agent,
+                "evidence": evidence,
+                "confidence": confidence,
+            }
+        )
 
     def commit(self) -> List[int]:
         """

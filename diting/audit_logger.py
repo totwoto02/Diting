@@ -14,11 +14,12 @@ from typing import Dict, List
 
 class LogLevel(Enum):
     """日志级别"""
-    DEBUG = 'DEBUG'
-    INFO = 'INFO'
-    WARNING = 'WARNING'
-    ERROR = 'ERROR'
-    CRITICAL = 'CRITICAL'
+
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
 
 
 class AuditLogger:
@@ -36,7 +37,7 @@ class AuditLogger:
         self.config = config or {}
 
         # 日志保留天数
-        self.log_retention_days = self.config.get('LOG_RETENTION_DAYS', 30)
+        self.log_retention_days = self.config.get("LOG_RETENTION_DAYS", 30)
 
         # 初始化数据库
         self.db = sqlite3.connect(db_path, check_same_thread=False)
@@ -74,23 +75,25 @@ class AuditLogger:
         """)
 
         # 创建索引
-        self.db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user_id)")
-        self.db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log(action)")
-        self.db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_audit_time ON audit_log(timestamp)")
-        self.db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_system_time ON system_log(timestamp)")
-        self.db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_system_level ON system_log(level)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user_id)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log(action)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_audit_time ON audit_log(timestamp)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_system_time ON system_log(timestamp)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_system_level ON system_log(level)")
 
         self.db.commit()
 
-    def log(self, user_id: str, action: str, resource: str = None,
-            details: Dict = None, ip_address: str = None,
-            user_agent: str = None, success: bool = True,
-            level: str = 'INFO'):
+    def log(
+        self,
+        user_id: str,
+        action: str,
+        resource: str = None,
+        details: Dict = None,
+        ip_address: str = None,
+        user_agent: str = None,
+        success: bool = True,
+        level: str = "INFO",
+    ):
         """
         记录审计日志
 
@@ -104,19 +107,28 @@ class AuditLogger:
             success: 是否成功
             level: 日志级别
         """
-        self.db.execute("""
+        self.db.execute(
+            """
             INSERT INTO audit_log
             (level, user_id, action, resource, details, ip_address, user_agent, success)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            level, user_id, action, resource,
-            json.dumps(details) if details else None,
-            ip_address, user_agent, 1 if success else 0
-        ))
+        """,
+            (
+                level,
+                user_id,
+                action,
+                resource,
+                json.dumps(details) if details else None,
+                ip_address,
+                user_agent,
+                1 if success else 0,
+            ),
+        )
         self.db.commit()
 
-    def log_system(self, component: str, message: str,
-                   level: str = 'INFO', stack_trace: str = None):
+    def log_system(
+        self, component: str, message: str, level: str = "INFO", stack_trace: str = None
+    ):
         """
         记录系统日志
 
@@ -126,15 +138,23 @@ class AuditLogger:
             level: 日志级别
             stack_trace: 堆栈跟踪
         """
-        self.db.execute("""
+        self.db.execute(
+            """
             INSERT INTO system_log (level, component, message, stack_trace)
             VALUES (?, ?, ?, ?)
-        """, (level, component, message, stack_trace))
+        """,
+            (level, component, message, stack_trace),
+        )
         self.db.commit()
 
-    def query(self, user_id: str = None, action: str = None,
-              time_range: str = '24h', level: str = None,
-              success: bool = None) -> List[Dict]:
+    def query(
+        self,
+        user_id: str = None,
+        action: str = None,
+        time_range: str = "24h",
+        level: str = None,
+        success: bool = None,
+    ) -> List[Dict]:
         """
         查询审计日志
 
@@ -149,14 +169,14 @@ class AuditLogger:
             审计日志列表
         """
         # 解析时间范围
-        if time_range.endswith('h'):
+        if time_range.endswith("h"):
             hours = int(time_range[:-1])
-            time_param = f'-{hours} hours'
-        elif time_range.endswith('d'):
+            time_param = f"-{hours} hours"
+        elif time_range.endswith("d"):
             days = int(time_range[:-1])
-            time_param = f'-{days} days'
+            time_param = f"-{days} days"
         else:
-            time_param = '-24 hours'
+            time_param = "-24 hours"
 
         conditions = ["timestamp > datetime('now', ?)"]
         params = [time_param]
@@ -186,8 +206,9 @@ class AuditLogger:
         cursor = self.db.execute(query, params)
         return [dict(row) for row in cursor.fetchall()]
 
-    def query_system(self, component: str = None, level: str = None,
-                     time_range: str = '24h') -> List[Dict]:
+    def query_system(
+        self, component: str = None, level: str = None, time_range: str = "24h"
+    ) -> List[Dict]:
         """
         查询系统日志
 
@@ -200,14 +221,14 @@ class AuditLogger:
             系统日志列表
         """
         # 解析时间范围
-        if time_range.endswith('h'):
+        if time_range.endswith("h"):
             hours = int(time_range[:-1])
-            time_param = f'-{hours} hours'
-        elif time_range.endswith('d'):
+            time_param = f"-{hours} hours"
+        elif time_range.endswith("d"):
             days = int(time_range[:-1])
-            time_param = f'-{days} days'
+            time_param = f"-{days} days"
         else:
-            time_param = '-24 hours'
+            time_param = "-24 hours"
 
         conditions = ["timestamp > datetime('now', ?)"]
         params = [time_param]
@@ -229,8 +250,7 @@ class AuditLogger:
         cursor = self.db.execute(query, params)
         return [dict(row) for row in cursor.fetchall()]
 
-    def export(self, time_range: str = '7d', format: str = 'csv',
-               user_id: str = None) -> bytes:
+    def export(self, time_range: str = "7d", format: str = "csv", user_id: str = None) -> bytes:
         """
         导出审计日志
 
@@ -244,20 +264,20 @@ class AuditLogger:
         """
         logs = self.query(user_id=user_id, time_range=time_range)
 
-        if format == 'csv':
+        if format == "csv":
             output = io.StringIO()
             if logs:
                 writer = csv.DictWriter(output, fieldnames=logs[0].keys())
                 writer.writeheader()
                 writer.writerows(logs)
-            return output.getvalue().encode('utf-8')
+            return output.getvalue().encode("utf-8")
 
-        elif format == 'json':
-            return json.dumps(logs, indent=2, default=str).encode('utf-8')
+        elif format == "json":
+            return json.dumps(logs, indent=2, default=str).encode("utf-8")
 
-        return b''
+        return b""
 
-    def get_statistics(self, time_range: str = '24h') -> Dict:
+    def get_statistics(self, time_range: str = "24h") -> Dict:
         """
         获取日志统计
 
@@ -268,82 +288,102 @@ class AuditLogger:
             统计信息字典
         """
         # 解析时间范围
-        if time_range.endswith('h'):
+        if time_range.endswith("h"):
             hours = int(time_range[:-1])
-            time_param = f'-{hours} hours'
-        elif time_range.endswith('d'):
+            time_param = f"-{hours} hours"
+        elif time_range.endswith("d"):
             days = int(time_range[:-1])
-            time_param = f'-{days} days'
+            time_param = f"-{days} days"
         else:
-            time_param = '-24 hours'
+            time_param = "-24 hours"
 
         # 总日志数
-        cursor = self.db.execute("""
+        cursor = self.db.execute(
+            """
             SELECT COUNT(*) as count FROM audit_log
             WHERE timestamp > datetime('now', ?)
-        """, (time_param,))
-        total = cursor.fetchone()['count']
+        """,
+            (time_param,),
+        )
+        total = cursor.fetchone()["count"]
 
         # 按级别统计
-        cursor = self.db.execute("""
+        cursor = self.db.execute(
+            """
             SELECT level, COUNT(*) as count FROM audit_log
             WHERE timestamp > datetime('now', ?)
             GROUP BY level
-        """, (f'-{time_range}',))
-        by_level = {row['level']: row['count'] for row in cursor.fetchall()}
+        """,
+            (f"-{time_range}",),
+        )
+        by_level = {row["level"]: row["count"] for row in cursor.fetchall()}
 
         # 按用户统计
-        cursor = self.db.execute("""
+        cursor = self.db.execute(
+            """
             SELECT user_id, COUNT(*) as count FROM audit_log
             WHERE timestamp > datetime('now', ?)
             GROUP BY user_id
             ORDER BY count DESC
             LIMIT 10
-        """, (f'-{time_range}',))
-        by_user = {row['user_id'] or 'anonymous': row['count']
-                   for row in cursor.fetchall()}
+        """,
+            (f"-{time_range}",),
+        )
+        by_user = {row["user_id"] or "anonymous": row["count"] for row in cursor.fetchall()}
 
         # 按操作统计
-        cursor = self.db.execute("""
+        cursor = self.db.execute(
+            """
             SELECT action, COUNT(*) as count FROM audit_log
             WHERE timestamp > datetime('now', ?)
             GROUP BY action
             ORDER BY count DESC
             LIMIT 10
-        """, (f'-{time_range}',))
-        by_action = {row['action']: row['count'] for row in cursor.fetchall()}
+        """,
+            (f"-{time_range}",),
+        )
+        by_action = {row["action"]: row["count"] for row in cursor.fetchall()}
 
         # 成功率
-        cursor = self.db.execute("""
+        cursor = self.db.execute(
+            """
             SELECT
                 SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) as success_rate
             FROM audit_log
             WHERE timestamp > datetime('now', ?)
-        """, (f'-{time_range}',))
-        success_rate = cursor.fetchone()['success_rate'] or 0
+        """,
+            (f"-{time_range}",),
+        )
+        success_rate = cursor.fetchone()["success_rate"] or 0
 
         return {
-            'total': total,
-            'by_level': by_level,
-            'by_user': by_user,
-            'by_action': by_action,
-            'success_rate': success_rate,
-            'time_range': time_range
+            "total": total,
+            "by_level": by_level,
+            "by_user": by_user,
+            "by_action": by_action,
+            "success_rate": success_rate,
+            "time_range": time_range,
         }
 
     def cleanup_old_logs(self):
         """清理旧日志"""
         # 清理审计日志
-        self.db.execute("""
+        self.db.execute(
+            """
             DELETE FROM audit_log
             WHERE timestamp < datetime('now', ?)
-        """, (f'-{self.log_retention_days} days',))
+        """,
+            (f"-{self.log_retention_days} days",),
+        )
 
         # 清理系统日志
-        self.db.execute("""
+        self.db.execute(
+            """
             DELETE FROM system_log
             WHERE timestamp < datetime('now', ?)
-        """, (f'-{self.log_retention_days} days',))
+        """,
+            (f"-{self.log_retention_days} days",),
+        )
 
         self.db.commit()
 
@@ -353,28 +393,28 @@ class AuditLogger:
 
 
 # 使用示例
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
     import tempfile
 
     # 创建测试数据库
-    db_fd, db_path = tempfile.mkstemp(suffix='.db')
+    db_fd, db_path = tempfile.mkstemp(suffix=".db")
 
     # 创建审计日志器
     logger = AuditLogger(db_path)
 
     # 记录审计日志
-    logger.log('user_001', 'ai_call', 'slice_123', {'model': 'qwen-vl-max'})
-    logger.log('user_001', 'storage_upload', 'file_456', {'size': 1024})
+    logger.log("user_001", "ai_call", "slice_123", {"model": "qwen-vl-max"})
+    logger.log("user_001", "storage_upload", "file_456", {"size": 1024})
 
     # 记录系统日志
-    logger.log_system('MFS', '系统启动', 'INFO')
+    logger.log_system("MFS", "系统启动", "INFO")
 
     # 查询日志
-    logs = logger.query('user_001', time_range='1h')
+    logs = logger.query("user_001", time_range="1h")
 
     # 获取统计
-    stats = logger.get_statistics('1h')
+    stats = logger.get_statistics("1h")
 
     # 清理
     logger.close()

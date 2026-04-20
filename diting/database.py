@@ -31,11 +31,7 @@ class Database:
             sqlite3.Connection 对象
         """
         if self._connection is None:
-            self._connection = sqlite3.connect(
-                self.db_path,
-                check_same_thread=False,
-                timeout=30.0
-            )
+            self._connection = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30.0)
             # 启用 WAL 模式以提高并发性能
             self._connection.execute("PRAGMA journal_mode=WAL")
             self._connection.execute("PRAGMA synchronous=NORMAL")
@@ -73,8 +69,7 @@ class Database:
         # 分割 SQL 语句并逐个执行（避免 executescript 的问题）
         with self.get_connection() as conn:
             # 按分号分割语句
-            statements = [stmt.strip()
-                          for stmt in schema_sql.split(';') if stmt.strip()]
+            statements = [stmt.strip() for stmt in schema_sql.split(";") if stmt.strip()]
             for statement in statements:
                 conn.execute(statement)
             conn.commit()

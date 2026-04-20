@@ -19,6 +19,7 @@ from .errors import MFTInvalidPathError
 
 def _get_kg_class():
     from .knowledge_graph_v2 import KnowledgeGraphV2
+
     return KnowledgeGraphV2
 
 
@@ -109,7 +110,7 @@ class LRUCache:
                 "size": len(self.cache),
                 "hits": self.hits,
                 "misses": self.misses,
-                "hit_rate": f"{hit_rate:.2f}%"
+                "hit_rate": f"{hit_rate:.2f}%",
             }
 
 
@@ -121,10 +122,11 @@ class MFT:
     """
 
     def __init__(
-            self,
-            db_path: Optional[str] = None,
-            cache_capacity: int = 100,
-            kg_db_path: Optional[str] = None):
+        self,
+        db_path: Optional[str] = None,
+        cache_capacity: int = 100,
+        kg_db_path: Optional[str] = None,
+    ):
         """
         初始化 MFT 管理器
 
@@ -136,8 +138,7 @@ class MFT:
         if db_path is None:
             db_path = ":memory:"
 
-        self.config = Config(
-            db_path=db_path) if db_path != ":memory:" else None
+        self.config = Config(db_path=db_path) if db_path != ":memory:" else None
         self.db = Database(self.config) if self.config else Database()
         self._init_schema()
 
@@ -194,8 +195,7 @@ class MFT:
         """
         self.db.init_schema(schema)
 
-    def create(self, v_path: str, type: str, content: str,
-               status: str = 'active') -> int:
+    def create(self, v_path: str, type: str, content: str, status: str = "active") -> int:
         """
         创建记忆文件
 
@@ -220,21 +220,27 @@ class MFT:
                 INSERT INTO mft (v_path, type, status, content, create_ts, update_ts)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (v_path, type, status, content, datetime.now(
-                ).isoformat(), datetime.now().isoformat())
+                (
+                    v_path,
+                    type,
+                    status,
+                    content,
+                    datetime.now().isoformat(),
+                    datetime.now().isoformat(),
+                ),
             )
             conn.commit()
             inode = cursor.lastrowid
 
             # 预填充缓存
             result = {
-                'inode': inode,
-                'v_path': v_path,
-                'type': type,
-                'status': status,
-                'content': content,
-                'create_ts': datetime.now(),
-                'update_ts': datetime.now()
+                "inode": inode,
+                "v_path": v_path,
+                "type": type,
+                "status": status,
+                "content": content,
+                "create_ts": datetime.now(),
+                "update_ts": datetime.now(),
             }
             self.cache.put(v_path, result)
 
@@ -267,7 +273,7 @@ class MFT:
                 FROM mft
                 WHERE v_path = ? AND deleted = 0
                 """,
-                (v_path,)
+                (v_path,),
             )
             row = cursor.fetchone()
             if row:
@@ -277,9 +283,9 @@ class MFT:
                 return result
             return None
 
-    def update(self, v_path: str,
-               content: Optional[str] = None,
-               status: Optional[str] = None) -> bool:
+    def update(
+        self, v_path: str, content: Optional[str] = None, status: Optional[str] = None
+    ) -> bool:
         """
         更新记忆文件内容或状态
 
@@ -302,7 +308,7 @@ class MFT:
                     SET content = ?, status = ?, update_ts = ?
                     WHERE v_path = ? AND deleted = 0
                     """,
-                    (content, status, datetime.now().isoformat(), v_path)
+                    (content, status, datetime.now().isoformat(), v_path),
                 )
             elif content is not None:
                 cursor = conn.execute(
@@ -311,7 +317,7 @@ class MFT:
                     SET content = ?, update_ts = ?
                     WHERE v_path = ? AND deleted = 0
                     """,
-                    (content, datetime.now().isoformat(), v_path)
+                    (content, datetime.now().isoformat(), v_path),
                 )
             else:  # status is not None
                 cursor = conn.execute(
@@ -320,7 +326,7 @@ class MFT:
                     SET status = ?, update_ts = ?
                     WHERE v_path = ? AND deleted = 0
                     """,
-                    (status, datetime.now().isoformat(), v_path)
+                    (status, datetime.now().isoformat(), v_path),
                 )
             conn.commit()
             success = cursor.rowcount > 0
@@ -330,10 +336,10 @@ class MFT:
                 cached = self.cache.get(v_path)
                 if cached:
                     if content is not None:
-                        cached['content'] = content
+                        cached["content"] = content
                     if status is not None:
-                        cached['status'] = status
-                    cached['update_ts'] = datetime.now()
+                        cached["status"] = status
+                    cached["update_ts"] = datetime.now()
                     self.cache.put(v_path, cached)
 
             return success
@@ -355,7 +361,7 @@ class MFT:
                 SET deleted = 1, status = 'deleted', update_ts = ?
                 WHERE v_path = ? AND deleted = 0
                 """,
-                (datetime.now().isoformat(), v_path)
+                (datetime.now().isoformat(), v_path),
             )
             conn.commit()
             success = cursor.rowcount > 0
@@ -366,8 +372,7 @@ class MFT:
 
             return success
 
-    def search(self, query: str,
-               scope: Optional[str] = None) -> List[Dict[str, Any]]:
+    def search(self, query: str, scope: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         搜索记忆文件 (使用 LIKE 模糊匹配)
 
@@ -387,7 +392,7 @@ class MFT:
                     WHERE v_path LIKE ? AND content LIKE ? AND deleted = 0
                     ORDER BY update_ts DESC
                     """,
-                    (scope + "%", f"%{query}%")
+                    (scope + "%", f"%{query}%"),
                 )
             else:
                 cursor = conn.execute(
@@ -397,7 +402,7 @@ class MFT:
                     WHERE content LIKE ? AND deleted = 0
                     ORDER BY update_ts DESC
                     """,
-                    (f"%{query}%",)
+                    (f"%{query}%",),
                 )
 
             return [dict(row) for row in cursor.fetchall()]
@@ -420,7 +425,7 @@ class MFT:
                 WHERE type = ? AND deleted = 0
                 ORDER BY create_ts DESC
                 """,
-                (type,)
+                (type,),
             )
             return [dict(row) for row in cursor.fetchall()]
 
@@ -442,12 +447,11 @@ class MFT:
                 WHERE status = ? AND deleted = 0
                 ORDER BY update_ts DESC
                 """,
-                (status,)
+                (status,),
             )
             return [dict(row) for row in cursor.fetchall()]
 
-    def search_by_type(
-            self, type: str, query: Optional[str] = None) -> List[Dict[str, Any]]:
+    def search_by_type(self, type: str, query: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         按类型搜索记忆文件
 
@@ -467,7 +471,7 @@ class MFT:
                     WHERE type = ? AND content LIKE ? AND deleted = 0
                     ORDER BY update_ts DESC
                     """,
-                    (type, f"%{query}%")
+                    (type, f"%{query}%"),
                 )
             else:
                 cursor = conn.execute(
@@ -477,7 +481,7 @@ class MFT:
                     WHERE type = ? AND deleted = 0
                     ORDER BY update_ts DESC
                     """,
-                    (type,)
+                    (type,),
                 )
             return [dict(row) for row in cursor.fetchall()]
 
@@ -490,9 +494,9 @@ class MFT:
         """
         with self.db.get_connection() as conn:
             # 总数统计
-            total = conn.execute(
-                "SELECT COUNT(*) as count FROM mft WHERE deleted = 0"
-            ).fetchone()["count"]
+            total = conn.execute("SELECT COUNT(*) as count FROM mft WHERE deleted = 0").fetchone()[
+                "count"
+            ]
 
             # 按类型统计
             type_stats = conn.execute(
@@ -505,12 +509,14 @@ class MFT:
             ).fetchall()
 
             return {
-                "total": total, "by_type": {
-                    row["type"]: row["count"] for row in type_stats}, "by_status": {
-                    row["status"]: row["count"] for row in status_stats}}
+                "total": total,
+                "by_type": {row["type"]: row["count"] for row in type_stats},
+                "by_status": {row["status"]: row["count"] for row in status_stats},
+            }
 
-    def search_by_path_glob(self, path_pattern: str,
-                            type: Optional[str] = None) -> List[Dict[str, Any]]:
+    def search_by_path_glob(
+        self, path_pattern: str, type: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
         使用 GLOB 模式搜索路径（替代正则，性能提升 3-5 倍）
 
@@ -531,19 +537,25 @@ class MFT:
         """
         with self.db.get_connection() as conn:
             if type:
-                cursor = conn.execute("""
+                cursor = conn.execute(
+                    """
                     SELECT inode, v_path, type, status, content, create_ts, update_ts
                     FROM mft
                     WHERE v_path GLOB ? AND type = ? AND deleted = 0
                     ORDER BY update_ts DESC
-                """, (path_pattern, type))
+                """,
+                    (path_pattern, type),
+                )
             else:
-                cursor = conn.execute("""
+                cursor = conn.execute(
+                    """
                     SELECT inode, v_path, type, status, content, create_ts, update_ts
                     FROM mft
                     WHERE v_path GLOB ? AND deleted = 0
                     ORDER BY update_ts DESC
-                """, (path_pattern,))
+                """,
+                    (path_pattern,),
+                )
 
             return [dict(row) for row in cursor.fetchall()]
 
@@ -562,17 +574,19 @@ class MFT:
             JSON 字段值，未找到返回 None
         """
         with self.db.get_connection() as conn:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT json_extract(content, ?) AS value
                 FROM mft
                 WHERE v_path = ? AND deleted = 0
-            """, (json_path, v_path))
+            """,
+                (json_path, v_path),
+            )
 
             row = cursor.fetchone()
-            return row['value'] if row else None
+            return row["value"] if row else None
 
-    def search_by_json(self, json_path: str,
-                       value: Any) -> List[Dict[str, Any]]:
+    def search_by_json(self, json_path: str, value: Any) -> List[Dict[str, Any]]:
         """
         使用 SQLite JSON 扩展搜索包含特定 JSON 值的记录
 
@@ -584,12 +598,15 @@ class MFT:
             匹配的记忆文件列表
         """
         with self.db.get_connection() as conn:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT inode, v_path, type, status, content, create_ts, update_ts
                 FROM mft
                 WHERE json_extract(content, ?) = ? AND deleted = 0
                 ORDER BY update_ts DESC
-            """, (json_path, value))
+            """,
+                (json_path, value),
+            )
 
             return [dict(row) for row in cursor.fetchall()]
 
@@ -627,7 +644,7 @@ class MFT:
                 SELECT lcn_pointers FROM mft
                 WHERE v_path = ? AND deleted = 0
                 """,
-                (v_path,)
+                (v_path,),
             )
             row = cursor.fetchone()
             if row and row[0]:
@@ -654,7 +671,7 @@ class MFT:
                 SET lcn_pointers = ?, update_ts = ?
                 WHERE v_path = ? AND deleted = 0
                 """,
-                (json.dumps(pointers), datetime.now().isoformat(), v_path)
+                (json.dumps(pointers), datetime.now().isoformat(), v_path),
             )
             conn.commit()
             return cursor.rowcount > 0
@@ -686,38 +703,36 @@ class MFT:
             关键词列表
         """
         # 移除标点和停用词
-        text_clean = re.sub(r'[,.!?;:,\s]+', ' ', text)
+        text_clean = re.sub(r"[,.!?;:,\s]+", " ", text)
         words = text_clean.split()
 
         # 过滤停用词
         stopwords = {
-            '的',
-            '了',
-            '是',
-            '在',
-            '我',
-            '有',
-            '和',
-            '就',
-            '不',
-            '人',
-            '都',
-            '一',
-            '一个',
-            '特别',
-            '这个',
-            '角色',
-            '类型',
-            'to',
-            'the',
-            'a',
-            'an',
-            'is',
-            'are'}
-        filtered_words = [
-            w for w in words
-            if len(w) >= 2 and len(w) <= 4 and w not in stopwords
-        ]
+            "的",
+            "了",
+            "是",
+            "在",
+            "我",
+            "有",
+            "和",
+            "就",
+            "不",
+            "人",
+            "都",
+            "一",
+            "一个",
+            "特别",
+            "这个",
+            "角色",
+            "类型",
+            "to",
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+        }
+        filtered_words = [w for w in words if len(w) >= 2 and len(w) <= 4 and w not in stopwords]
 
         # 统计词频
         word_freq = {}
@@ -725,10 +740,7 @@ class MFT:
             word_freq[word] = word_freq.get(word, 0) + 1
 
         # 按频率排序
-        sorted_words = sorted(
-            word_freq.items(),
-            key=lambda x: x[1],
-            reverse=True)
+        sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
 
         return [word for word, freq in sorted_words[:top_k]]
 
@@ -753,7 +765,7 @@ class MFT:
 
             # 建立共现关系
             for i, kw1 in enumerate(keywords):
-                for kw2 in keywords[i + 1:]:
+                for kw2 in keywords[i + 1 :]:
                     self.kg.add_edge(kw1, kw2, "co_occurrence", 1.0)
         except Exception as e:
             # KG 构建失败不影响主流程
@@ -779,15 +791,11 @@ class MFT:
             if kg_result["found"]:
                 kg_expansion = {
                     "concept": kg_result.get("concept"),
-                    "expanded_concepts": kg_result.get(
-                        "expanded_concepts",
-                        []),
-                    "suggestion": kg_result.get("suggestion")}
+                    "expanded_concepts": kg_result.get("expanded_concepts", []),
+                    "suggestion": kg_result.get("suggestion"),
+                }
 
-        return {
-            "search_results": results,
-            "kg_expansion": kg_expansion
-        }
+        return {"search_results": results, "kg_expansion": kg_expansion}
 
     def close(self):
         """关闭数据库连接"""

@@ -11,6 +11,7 @@ from typing import Any, Dict, List
 @dataclass
 class Slice:
     """切片数据结构"""
+
     chunk_id: int
     offset: int
     length: int
@@ -25,10 +26,7 @@ class LengthSplitter:
     """
 
     def __init__(
-        self,
-        min_chunk_size: int = 500,
-        max_chunk_size: int = 2000,
-        overlap_ratio: float = 0.15
+        self, min_chunk_size: int = 500, max_chunk_size: int = 2000, overlap_ratio: float = 0.15
     ):
         """
         初始化切分器
@@ -57,12 +55,7 @@ class LengthSplitter:
 
         # 如果文本长度小于最小切片大小，直接返回单一切片
         if len(text) <= self.min_chunk_size:
-            return [Slice(
-                chunk_id=1,
-                offset=0,
-                length=len(text),
-                content=text
-            )]
+            return [Slice(chunk_id=1, offset=0, length=len(text), content=text)]
 
         slices = []
         chunk_id = 1
@@ -79,24 +72,18 @@ class LengthSplitter:
                 chunk_length = len(chunk_content)
             else:
                 # 中间片，取最大切片大小
-                chunk_content = text[current_pos:current_pos +
-                                     self.max_chunk_size]
+                chunk_content = text[current_pos : current_pos + self.max_chunk_size]
                 chunk_length = self.max_chunk_size
 
             # 计算重叠部分（从下一片开始位置回退）
             if chunk_id > 1 and overlap_size > 0:
                 # 包含前一片的重叠部分
-                chunk_content = text[current_pos -
-                                     overlap_size:current_pos +
-                                     self.max_chunk_size]
+                chunk_content = text[current_pos - overlap_size : current_pos + self.max_chunk_size]
                 chunk_length = len(chunk_content)
 
             # 创建切片
             slice_obj = Slice(
-                chunk_id=chunk_id,
-                offset=current_pos,
-                length=chunk_length,
-                content=chunk_content
+                chunk_id=chunk_id, offset=current_pos, length=chunk_length, content=chunk_content
             )
             slices.append(slice_obj)
 
@@ -108,10 +95,7 @@ class LengthSplitter:
             # 计算下一片的重叠大小
             if current_pos < len(text):
                 remaining_after = len(text) - current_pos
-                overlap_size = min(
-                    int(self.max_chunk_size * self.overlap_ratio),
-                    remaining_after
-                )
+                overlap_size = min(int(self.max_chunk_size * self.overlap_ratio), remaining_after)
 
         return slices
 
@@ -125,11 +109,4 @@ class LengthSplitter:
         Returns:
             元数据列表
         """
-        return [
-            {
-                "chunk_id": s.chunk_id,
-                "offset": s.offset,
-                "length": s.length
-            }
-            for s in slices
-        ]
+        return [{"chunk_id": s.chunk_id, "offset": s.offset, "length": s.length} for s in slices]

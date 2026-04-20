@@ -22,6 +22,7 @@ def check_diting_import():
     """检查 MFS 是否可导入"""
     try:
         from diting import __version__
+
         print(f"Diting 版本：{__version__}")
         print("✅ Diting 可正常导入")
         return True
@@ -44,6 +45,7 @@ def check_mcp_registration():
             print(f"✅ 找到 OpenClaw MCP 配置文件：{config_path}")
             # 检查是否包含 diting
             import json
+
             try:
                 with open(config_path, "r") as f:
                     config = json.load(f)

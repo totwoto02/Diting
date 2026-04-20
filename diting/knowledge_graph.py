@@ -44,16 +44,30 @@ class KnowledgeGraph:
             关键词列表
         """
         # 移除标点和停用词
-        text_clean = re.sub(r'[，。！？；：、\s]+', ' ', text)
+        text_clean = re.sub(r"[，。！？；：、\s]+", " ", text)
         words = text_clean.split()
 
         # 过滤停用词
-        stopwords = {'的', '了', '是', '在', '我', '有', '和', '就',
-                     '不', '人', '都', '一', '一个', '特别', '这个', '角色', '类型'}
-        filtered_words = [
-            w for w in words
-            if len(w) >= 2 and len(w) <= 4 and w not in stopwords
-        ]
+        stopwords = {
+            "的",
+            "了",
+            "是",
+            "在",
+            "我",
+            "有",
+            "和",
+            "就",
+            "不",
+            "人",
+            "都",
+            "一",
+            "一个",
+            "特别",
+            "这个",
+            "角色",
+            "类型",
+        }
+        filtered_words = [w for w in words if len(w) >= 2 and len(w) <= 4 and w not in stopwords]
 
         # 统计词频
         word_freq = defaultdict(int)
@@ -61,15 +75,11 @@ class KnowledgeGraph:
             word_freq[word] += 1
 
         # 按频率排序
-        sorted_words = sorted(
-            word_freq.items(),
-            key=lambda x: x[1],
-            reverse=True)
+        sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
 
         return [word for word, freq in sorted_words[:top_k]]
 
-    def add_memory(self, v_path: str, content: str,
-                   keywords: Optional[List[str]] = None):
+    def add_memory(self, v_path: str, content: str, keywords: Optional[List[str]] = None):
         """
         添加记忆到图谱
 
@@ -84,11 +94,7 @@ class KnowledgeGraph:
         # 添加节点
         for kw in keywords:
             if kw not in self.nodes:
-                self.nodes[kw] = {
-                    "type": "concept",
-                    "count": 1,
-                    "paths": [v_path]
-                }
+                self.nodes[kw] = {"type": "concept", "count": 1, "paths": [v_path]}
             else:
                 self.nodes[kw]["count"] += 1
                 if v_path not in self.nodes[kw]["paths"]:
@@ -96,25 +102,21 @@ class KnowledgeGraph:
 
         # 添加边（共现关系）
         for i, kw1 in enumerate(keywords):
-            for kw2 in keywords[i + 1:]:
+            for kw2 in keywords[i + 1 :]:
                 # 检查边是否已存在
                 edge_exists = False
                 for edge in self.edges:
-                    if (edge["from"] == kw1 and edge["to"] == kw2) or \
-                       (edge["from"] == kw2 and edge["to"] == kw1):
+                    if (edge["from"] == kw1 and edge["to"] == kw2) or (
+                        edge["from"] == kw2 and edge["to"] == kw1
+                    ):
                         edge["weight"] += 1
                         edge_exists = True
                         break
 
                 if not edge_exists:
-                    self.edges.append({
-                        "from": kw1,
-                        "to": kw2,
-                        "weight": 1
-                    })
+                    self.edges.append({"from": kw1, "to": kw2, "weight": 1})
 
-    def get_related_concepts(
-            self, keyword: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    def get_related_concepts(self, keyword: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """
         获取相关概念
 
@@ -132,15 +134,9 @@ class KnowledgeGraph:
         related = []
         for edge in self.edges:
             if edge["from"] == keyword:
-                related.append({
-                    "concept": edge["to"],
-                    "weight": edge["weight"]
-                })
+                related.append({"concept": edge["to"], "weight": edge["weight"]})
             elif edge["to"] == keyword:
-                related.append({
-                    "concept": edge["from"],
-                    "weight": edge["weight"]
-                })
+                related.append({"concept": edge["from"], "weight": edge["weight"]})
 
         # 按权重排序
         related.sort(key=lambda x: x["weight"], reverse=True)
@@ -163,9 +159,12 @@ class KnowledgeGraph:
             "query": query,
             "found": query in self.nodes,
             "related_concepts": [r["concept"] for r in related],
-            "suggestion": (f"搜索 '{query}' 时，可能也关心："
-                           f"{', '.join([r['concept'] for r in related[:3]])}"
-                           if related else None)
+            "suggestion": (
+                f"搜索 '{query}' 时，可能也关心："
+                f"{', '.join([r['concept'] for r in related[:3]])}"
+                if related
+                else None
+            ),
         }
 
     def save(self):
@@ -173,10 +172,7 @@ class KnowledgeGraph:
         if not self.graph_path:
             return
 
-        data = {
-            "nodes": self.nodes,
-            "edges": self.edges
-        }
+        data = {"nodes": self.nodes, "edges": self.edges}
 
         with open(self.graph_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -197,5 +193,5 @@ class KnowledgeGraph:
         return {
             "node_count": len(self.nodes),
             "edge_count": len(self.edges),
-            "avg_edges_per_node": len(self.edges) / len(self.nodes) if self.nodes else 0
+            "avg_edges_per_node": len(self.edges) / len(self.nodes) if self.nodes else 0,
         }

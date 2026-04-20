@@ -91,11 +91,11 @@ class LRUCache:
             total = self.hits + self.misses
             return {
                 "capacity": self.capacity,
-                "size": len(
-                    self.cache),
+                "size": len(self.cache),
                 "hits": self.hits,
                 "misses": self.misses,
-                "hit_rate": f"{(self.hits / total * 100) if total > 0 else 0:.2f}%"}
+                "hit_rate": f"{(self.hits / total * 100) if total > 0 else 0:.2f}%",
+            }
 
 
 class ConnectionPool:
@@ -128,11 +128,7 @@ class ConnectionPool:
 
     def _create_connection(self) -> sqlite3.Connection:
         """创建新的数据库连接"""
-        conn = sqlite3.connect(
-            self.db_path,
-            check_same_thread=False,
-            timeout=30.0
-        )
+        conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30.0)
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA synchronous=NORMAL")
         conn.row_factory = sqlite3.Row
@@ -201,7 +197,7 @@ class ConnectionPool:
                 "active_connections": len(self.active),
                 "available_connections": self.available.qsize(),
                 "total_acquired": self.total_acquired,
-                "total_released": self.total_released
+                "total_released": self.total_released,
             }
 
     def close(self) -> None:

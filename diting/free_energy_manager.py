@@ -44,12 +44,9 @@ class FreeEnergyManager:
         self.config = config or {}
 
         # 自由能阈值
-        self.extract_threshold = self.config.get(
-            'EXTRACT_THRESHOLD', 0.0)  # G > 0 可提取
-        self.high_threshold = self.config.get(
-            'HIGH_THRESHOLD', 50.0)       # G > 50 高可用性
-        self.low_threshold = self.config.get(
-            'LOW_THRESHOLD', 10.0)         # G < 10 低可用性
+        self.extract_threshold = self.config.get("EXTRACT_THRESHOLD", 0.0)  # G > 0 可提取
+        self.high_threshold = self.config.get("HIGH_THRESHOLD", 50.0)  # G > 50 高可用性
+        self.low_threshold = self.config.get("LOW_THRESHOLD", 10.0)  # G < 10 低可用性
 
         # 数据库
         self.db = sqlite3.connect(db_path, check_same_thread=False)
@@ -90,24 +87,24 @@ class FreeEnergyManager:
 
         # 表已存在，检查并添加缺失列
         cursor = self.db.execute("PRAGMA table_info(multimodal_slices)")
-        columns = [row['name'] for row in cursor.fetchall()]
+        columns = [row["name"] for row in cursor.fetchall()]
 
         # 添加自由能字段（如果不存在）
-        if 'free_energy_score' not in columns:
+        if "free_energy_score" not in columns:
             self.db.execute("""
                 ALTER TABLE multimodal_slices
                 ADD COLUMN free_energy_score REAL DEFAULT 0.0
             """)
 
         # 添加温度字段（如果不存在）
-        if 'temp_score' not in columns:
+        if "temp_score" not in columns:
             self.db.execute("""
                 ALTER TABLE multimodal_slices
                 ADD COLUMN temp_score REAL DEFAULT 0.0
             """)
 
         # 添加上下文向量字段（用于计算关联度）
-        if 'context_vector' not in columns:
+        if "context_vector" not in columns:
             self.db.execute("""
                 ALTER TABLE multimodal_slices
                 ADD COLUMN context_vector TEXT
@@ -115,10 +112,13 @@ class FreeEnergyManager:
 
         self.db.commit()
 
-    def calculate_free_energy(self, slice_id: str,
-                              heat_score: float = None,
-                              temp_score: float = None,
-                              entropy_score: float = None) -> Dict:
+    def calculate_free_energy(
+        self,
+        slice_id: str,
+        heat_score: float = None,
+        temp_score: float = None,
+        entropy_score: float = None,
+    ) -> Dict:
         """
         计算记忆的自由能
 
@@ -136,39 +136,39 @@ class FreeEnergyManager:
         # 获取记忆信息
         memory = self._get_memory(slice_id)
         if not memory:
-            return {'error': '记忆不存在'}
+            return {"error": "记忆不存在"}
 
         # 获取各系统评分
-        U = heat_score if heat_score is not None else memory.get(
-            'heat_score', 50)
-        T = temp_score if temp_score is not None else memory.get(
-            'temp_score', 0.5)
-        S = entropy_score if entropy_score is not None else memory.get(
-            'entropy_score', 0.5)
+        U = heat_score if heat_score is not None else memory.get("heat_score", 50)
+        T = temp_score if temp_score is not None else memory.get("temp_score", 0.5)
+        S = entropy_score if entropy_score is not None else memory.get("entropy_score", 0.5)
 
         # 计算自由能：G = U - TS
         G = U - (T * S * 100)  # 乘以 100 使 TS 与 U 在同一量级
 
         # 更新数据库
-        self.db.execute("""
+        self.db.execute(
+            """
             UPDATE multimodal_slices
             SET free_energy_score = ?
             WHERE slice_id = ?
-        """, (G, slice_id))
+        """,
+            (G, slice_id),
+        )
         self.db.commit()
 
         # 评估可用性
         availability = self._evaluate_availability(G)
 
         return {
-            'slice_id': slice_id,
-            'free_energy': G,
-            'heat_score': U,
-            'temp_score': T,
-            'entropy_score': S,
-            'availability': availability,
-            'can_extract': G > self.extract_threshold,
-            'formula': f'G = U - TS = {U} - ({T} × {S} × 100) = {G:.2f}'
+            "slice_id": slice_id,
+            "free_energy": G,
+            "heat_score": U,
+            "temp_score": T,
+            "entropy_score": S,
+            "availability": availability,
+            "can_extract": G > self.extract_threshold,
+            "formula": f"G = U - TS = {U} - ({T} × {S} × 100) = {G:.2f}",
         }
 
     def _evaluate_availability(self, G: float) -> str:
@@ -182,16 +182,15 @@ class FreeEnergyManager:
             可用性等级
         """
         if G > self.high_threshold:
-            return 'high'      # 🔥 高可用性
+            return "high"  # 🔥 高可用性
         elif G > self.low_threshold:
-            return 'medium'    # 🌤️ 中等可用性
+            return "medium"  # 🌤️ 中等可用性
         elif G > self.extract_threshold:
-            return 'low'       # ❄️ 低可用性
+            return "low"  # ❄️ 低可用性
         else:
-            return 'frozen'    # 🧊 冻结（无法提取）
+            return "frozen"  # 🧊 冻结（无法提取）
 
-    def batch_calculate(self, slice_ids: List[str],
-                        current_context: str = None) -> Dict[str, Dict]:
+    def batch_calculate(self, slice_ids: List[str], current_context: str = None) -> Dict[str, Dict]:
         """
         批量计算自由能
 
@@ -208,11 +207,9 @@ class FreeEnergyManager:
             # 如果有上下文，计算关联度
             temp_score = None
             if current_context:
-                temp_score = self._calculate_relevance(
-                    slice_id, current_context)
+                temp_score = self._calculate_relevance(slice_id, current_context)
 
-            result = self.calculate_free_energy(
-                slice_id, temp_score=temp_score)
+            result = self.calculate_free_energy(slice_id, temp_score=temp_score)
             results[slice_id] = result
 
         return results
@@ -276,27 +273,30 @@ class FreeEnergyManager:
         if not memory:
             return 0.0
 
-        inode = memory.get('inode')
+        inode = memory.get("inode")
         if not inode:
             return 0.0
 
         # 使用 FTS5 的 bm25() 函数计算相关度
         # bm25() 返回负值，绝对值越大越相关
         try:
-            cursor = self.db.execute("""
+            cursor = self.db.execute(
+                """
                 SELECT bm25(mft_fts5) AS score
                 FROM mft_fts5
                 WHERE rowid = ?
                 AND mft_fts5 MATCH ?
-            """, (inode, context))
+            """,
+                (inode, context),
+            )
 
             row = cursor.fetchone()
-            if not row or row['score'] is None:
+            if not row or row["score"] is None:
                 return 0.0
 
             # BM25 得分是负值，转换为正值并归一化
             # 典型范围：-10 到 0，转换为 0 到 1
-            bm25_raw = -row['score']  # 转为正值
+            bm25_raw = -row["score"]  # 转为正值
             bm25_normalized = min(1.0, bm25_raw / 10.0)  # 归一化到 0-1
 
             return bm25_normalized
@@ -366,15 +366,15 @@ class FreeEnergyManager:
 
         # 提取 2 字词
         for i in range(len(text) - 1):
-            word = text[i:i + 2]
+            word = text[i : i + 2]
             # 过滤标点和空白
-            if re.match(r'[\w\u4e00-\u9fff]', word):
+            if re.match(r"[\w\u4e00-\u9fff]", word):
                 words.append(word)
 
         # 提取 3 字词（可选，增加精度）
         for i in range(len(text) - 2):
-            word = text[i:i + 3]
-            if re.match(r'[\w\u4e00-\u9fff]', word):
+            word = text[i : i + 3]
+            if re.match(r"[\w\u4e00-\u9fff]", word):
                 words.append(word)
 
         # 去重
@@ -400,12 +400,12 @@ class FreeEnergyManager:
                 continue
 
             # 如果是英文或数字，直接作为一个词
-            if re.match(r'^[a-zA-Z0-9]+$', segment):
+            if re.match(r"^[a-zA-Z0-9]+$", segment):
                 words.append(segment)
             else:
                 # 中文：按 2 字分词（简单实现）
                 for i in range(0, len(segment), 2):
-                    word = segment[i:i + 2]
+                    word = segment[i : i + 2]
                     if len(word) >= 1:
                         words.append(word)
 
@@ -424,16 +424,16 @@ class FreeEnergyManager:
         parts = []
 
         # 路径
-        path = memory.get('memory_path', '')
+        path = memory.get("memory_path", "")
         if path:
             parts.append(path)
 
         # AI 关键词
-        ai_keywords = memory.get('ai_keywords', '')
+        ai_keywords = memory.get("ai_keywords", "")
         if ai_keywords:
             parts.append(ai_keywords)
 
-        return ' '.join(parts)
+        return " ".join(parts)
 
     def _match_path(self, memory: Dict, context: str) -> float:
         """
@@ -447,12 +447,12 @@ class FreeEnergyManager:
         Returns:
             匹配度 (0-1)
         """
-        path = memory.get('memory_path', '')
+        path = memory.get("memory_path", "")
         if not path:
             return 0.0
 
         # 提取路径中的关键词（去掉斜杠）
-        path_parts = [p for p in path.split('/') if p]
+        path_parts = [p for p in path.split("/") if p]
 
         # 统计有多少部分在上下文中出现
         match_count = sum(1 for part in path_parts if part in context)
@@ -480,12 +480,12 @@ class FreeEnergyManager:
         keywords = []
 
         # 从路径提取
-        path = memory.get('memory_path', '')
+        path = memory.get("memory_path", "")
         if path:
-            keywords.extend(path.split('/'))
+            keywords.extend(path.split("/"))
 
         # 从 AI 关键词提取
-        ai_keywords = memory.get('ai_keywords', '')
+        ai_keywords = memory.get("ai_keywords", "")
         if ai_keywords:
             try:
                 kw_list = json.loads(ai_keywords)
@@ -495,8 +495,7 @@ class FreeEnergyManager:
 
         return [kw.lower() for kw in keywords if kw]
 
-    def get_extractable_memories(self, context: str = None,
-                                 limit: int = 20) -> List[Dict]:
+    def get_extractable_memories(self, context: str = None, limit: int = 20) -> List[Dict]:
         """
         获取可提取的记忆（G > 阈值）
 
@@ -508,14 +507,17 @@ class FreeEnergyManager:
             可提取记忆列表（按自由能排序）
         """
         # 查询所有记忆
-        cursor = self.db.execute("""
+        cursor = self.db.execute(
+            """
             SELECT slice_id, memory_path, heat_score, temp_score,
                    entropy_score, free_energy_score
             FROM multimodal_slices
             WHERE iteration_status != 'frozen'
             ORDER BY free_energy_score DESC
             LIMIT ?
-        """, (limit,))
+        """,
+            (limit,),
+        )
 
         results = []
         for row in cursor.fetchall():
@@ -523,17 +525,13 @@ class FreeEnergyManager:
 
             # 如果有上下文，重新计算关联度和自由能
             if context:
-                temp_score = self._calculate_relevance(
-                    memory['slice_id'], context)
-                fe_result = self.calculate_free_energy(
-                    memory['slice_id'],
-                    temp_score=temp_score
-                )
-                memory['free_energy_score'] = fe_result['free_energy']
-                memory['temp_score'] = temp_score
+                temp_score = self._calculate_relevance(memory["slice_id"], context)
+                fe_result = self.calculate_free_energy(memory["slice_id"], temp_score=temp_score)
+                memory["free_energy_score"] = fe_result["free_energy"]
+                memory["temp_score"] = temp_score
 
             # 只返回可提取的（G > 0）
-            if memory['free_energy_score'] > self.extract_threshold:
+            if memory["free_energy_score"] > self.extract_threshold:
                 results.append(memory)
 
         return results
@@ -558,33 +556,30 @@ class FreeEnergyManager:
         stats = dict(cursor.fetchone())
 
         # 评估系统状态
-        if stats['avg_free_energy'] > 50:
-            system_state = 'highly_active'  # 🔥 高度活跃
-        elif stats['avg_free_energy'] > 20:
-            system_state = 'active'         # 🌤️ 活跃
-        elif stats['avg_free_energy'] > 0:
-            system_state = 'stable'         # ❄️ 稳定
+        if stats["avg_free_energy"] > 50:
+            system_state = "highly_active"  # 🔥 高度活跃
+        elif stats["avg_free_energy"] > 20:
+            system_state = "active"  # 🌤️ 活跃
+        elif stats["avg_free_energy"] > 0:
+            system_state = "stable"  # ❄️ 稳定
         else:
-            system_state = 'inactive'       # 🧊 不活跃
+            system_state = "inactive"  # 🧊 不活跃
 
         return {
-            'statistics': stats,
-            'system_state': system_state,
-            'formula': 'G = U - TS',
-            'interpretation': {
-                'high_heat': '记忆被频繁访问（高内能）',
-                'high_temp': '记忆与上下文高度相关（高关联度）',
-                'high_entropy': '记忆有争议/混乱（高不确定性）',
-                'high_free_energy': '记忆可被有效提取并影响决策'
-            }
+            "statistics": stats,
+            "system_state": system_state,
+            "formula": "G = U - TS",
+            "interpretation": {
+                "high_heat": "记忆被频繁访问（高内能）",
+                "high_temp": "记忆与上下文高度相关（高关联度）",
+                "high_entropy": "记忆有争议/混乱（高不确定性）",
+                "high_free_energy": "记忆可被有效提取并影响决策",
+            },
         }
 
     def _get_memory(self, slice_id: str) -> Optional[Dict]:
         """获取记忆信息"""
-        cursor = self.db.execute(
-            "SELECT * FROM multimodal_slices WHERE slice_id = ?",
-            (slice_id,)
-        )
+        cursor = self.db.execute("SELECT * FROM multimodal_slices WHERE slice_id = ?", (slice_id,))
         row = cursor.fetchone()
         return dict(row) if row else None
 
@@ -594,18 +589,16 @@ class FreeEnergyManager:
 
 
 # 使用示例
-if __name__ == '__main__':
+if __name__ == "__main__":
     import tempfile
 
     # 创建测试数据库
-    db_fd, db_path = tempfile.mkstemp(suffix='.db')
+    db_fd, db_path = tempfile.mkstemp(suffix=".db")
 
     # 初始化自由能管理器
-    fe_mgr = FreeEnergyManager(db_path, {
-        'EXTRACT_THRESHOLD': 0.0,
-        'HIGH_THRESHOLD': 50.0,
-        'LOW_THRESHOLD': 10.0
-    })
+    fe_mgr = FreeEnergyManager(
+        db_path, {"EXTRACT_THRESHOLD": 0.0, "HIGH_THRESHOLD": 50.0, "LOW_THRESHOLD": 10.0}
+    )
 
     # 示例：计算记忆的自由能
     print("=== 自由能系统示例 ===")

@@ -26,17 +26,19 @@ class MCPServer:
             db_path: SQLite 数据库路径
         """
         import os
+
         if db_path is None:
-            db_path = os.environ.get('DITING_DB_PATH', None)
+            db_path = os.environ.get("DITING_DB_PATH", None)
             if not db_path:
-                base_dir = os.path.dirname(
-                    os.path.dirname(os.path.abspath(__file__)))
-                db_path = os.path.join(base_dir, 'diting.db')
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                db_path = os.path.join(base_dir, "diting.db")
 
         # KG 数据库路径
-        kg_db_path = os.path.join(
-            os.path.dirname(db_path),
-            'diting_kg.db') if db_path != ':memory:' else None
+        kg_db_path = (
+            os.path.join(os.path.dirname(db_path), "diting_kg.db")
+            if db_path != ":memory:"
+            else None
+        )
 
         self.mft = MFT(db_path=db_path, kg_db_path=kg_db_path)
         self.server = Server("diting")
@@ -54,13 +56,10 @@ class MCPServer:
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "path": {
-                                "type": "string",
-                                "description": "虚拟路径 (如：/test/rules)"
-                            }
+                            "path": {"type": "string", "description": "虚拟路径 (如：/test/rules)"}
                         },
-                        "required": ["path"]
-                    }
+                        "required": ["path"],
+                    },
                 ),
                 Tool(
                     name="diting_write",
@@ -68,21 +67,15 @@ class MCPServer:
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "path": {
-                                "type": "string",
-                                "description": "虚拟路径 (如：/test/rules)"
-                            },
+                            "path": {"type": "string", "description": "虚拟路径 (如：/test/rules)"},
                             "type": {
                                 "type": "string",
-                                "description": "文件类型 (如：RULE, NOTE, CODE)"
+                                "description": "文件类型 (如：RULE, NOTE, CODE)",
                             },
-                            "content": {
-                                "type": "string",
-                                "description": "文件内容"
-                            }
+                            "content": {"type": "string", "description": "文件内容"},
                         },
-                        "required": ["path", "type", "content"]
-                    }
+                        "required": ["path", "type", "content"],
+                    },
                 ),
                 Tool(
                     name="diting_search",
@@ -90,17 +83,11 @@ class MCPServer:
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "query": {
-                                "type": "string",
-                                "description": "搜索关键词"
-                            },
-                            "scope": {
-                                "type": "string",
-                                "description": "搜索范围 (路径前缀，可选)"
-                            }
+                            "query": {"type": "string", "description": "搜索关键词"},
+                            "scope": {"type": "string", "description": "搜索范围 (路径前缀，可选)"},
                         },
-                        "required": ["query"]
-                    }
+                        "required": ["query"],
+                    },
                 ),
                 # Phase 2: 知识图谱工具
                 Tool(
@@ -109,17 +96,11 @@ class MCPServer:
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "query": {
-                                "type": "string",
-                                "description": "搜索关键词"
-                            },
-                            "max_depth": {
-                                "type": "integer",
-                                "description": "最大扩展深度，默认 2"
-                            }
+                            "query": {"type": "string", "description": "搜索关键词"},
+                            "max_depth": {"type": "integer", "description": "最大扩展深度，默认 2"},
                         },
-                        "required": ["query"]
-                    }
+                        "required": ["query"],
+                    },
                 ),
                 Tool(
                     name="kg_get_related",
@@ -127,34 +108,21 @@ class MCPServer:
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "concept": {
-                                "type": "string",
-                                "description": "概念名称"
-                            },
-                            "top_k": {
-                                "type": "integer",
-                                "description": "返回前 K 个，默认 5"
-                            }
+                            "concept": {"type": "string", "description": "概念名称"},
+                            "top_k": {"type": "integer", "description": "返回前 K 个，默认 5"},
                         },
-                        "required": ["concept"]
-                    }
+                        "required": ["concept"],
+                    },
                 ),
                 Tool(
                     name="kg_stats",
                     description="获取知识图谱统计信息",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {}
-                    }
+                    inputSchema={"type": "object", "properties": {}},
                 ),
-
                 Tool(
                     name="entropy_stats",
                     description="获取熵系统统计信息",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {}
-                    }
+                    inputSchema={"type": "object", "properties": {}},
                 ),
                 Tool(
                     name="get_project_entropy",
@@ -162,38 +130,27 @@ class MCPServer:
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "project_path": {
-                                "type": "string",
-                                "description": "项目路径前缀"
-                            }
+                            "project_path": {"type": "string", "description": "项目路径前缀"}
                         },
-                        "required": ["project_path"]
-                    }
+                        "required": ["project_path"],
+                    },
                 ),
                 Tool(
                     name="entropy_anomaly",
                     description="检测熵值异常",
                     inputSchema={
                         "type": "object",
-                        "properties": {
-                            "slice_id": {
-                                "type": "string",
-                                "description": "切片 ID"
-                            }
-                        },
-                        "required": ["slice_id"]
-                    }
-                )
-
+                        "properties": {"slice_id": {"type": "string", "description": "切片 ID"}},
+                        "required": ["slice_id"],
+                    },
+                ),
             ]
 
         @self.server.call_tool()
-        async def _handle_call_tool(
-                name: str, arguments: Dict[str, Any]) -> list[TextContent]:
+        async def _handle_call_tool(name: str, arguments: Dict[str, Any]) -> list[TextContent]:
             return await self.call_tool(name, arguments)
 
-    async def call_tool(
-            self, name: str, arguments: Dict[str, Any]) -> list[TextContent]:
+    async def call_tool(self, name: str, arguments: Dict[str, Any]) -> list[TextContent]:
         """MCP 工具调用入口"""
         try:
             if name == "diting_read":
@@ -225,8 +182,7 @@ class MCPServer:
         except Exception as e:
             return [TextContent(type="text", text=f"系统错误：{str(e)}")]
 
-    async def _diting_read(
-            self, arguments: Dict[str, Any]) -> list[TextContent]:
+    async def _diting_read(self, arguments: Dict[str, Any]) -> list[TextContent]:
         """diting_read 工具实现"""
         path = arguments.get("path")
         if not path:
@@ -237,20 +193,20 @@ class MCPServer:
             return [
                 TextContent(
                     type="text",
-                    text=f"路径：{result['v_path']}\n类型：{result['type']}\n内容：{result['content']}")]
+                    text=f"路径：{result['v_path']}\n类型：{result['type']}\n内容：{result['content']}",
+                )
+            ]
         else:
             raise MFTNotFoundError(f"未找到路径：{path}")
 
-    async def _diting_write(
-            self, arguments: Dict[str, Any]) -> list[TextContent]:
+    async def _diting_write(self, arguments: Dict[str, Any]) -> list[TextContent]:
         """diting_write 工具实现"""
         path = arguments.get("path")
         type_ = arguments.get("type")
         content = arguments.get("content")
 
         if not all([path, type_, content]):
-            return [TextContent(
-                type="text", text="错误：缺少必需参数 (path, type, content)")]
+            return [TextContent(type="text", text="错误：缺少必需参数 (path, type, content)")]
 
         # 检查是否已存在
         existing = self.mft.read(path)
@@ -261,11 +217,9 @@ class MCPServer:
         else:
             # 创建
             inode = self.mft.create(path, type_, content)
-            return [TextContent(
-                type="text", text=f"已创建：{path} (inode={inode})")]
+            return [TextContent(type="text", text=f"已创建：{path} (inode={inode})")]
 
-    async def _diting_search(
-            self, arguments: Dict[str, Any]) -> list[TextContent]:
+    async def _diting_search(self, arguments: Dict[str, Any]) -> list[TextContent]:
         """diting_search 工具实现"""
         query = arguments.get("query")
         scope = arguments.get("scope")
@@ -304,15 +258,14 @@ class MCPServer:
         output = f"✅ 找到概念：{result.get('concept', query)}\n\n"
         if result.get("expanded_concepts"):
             output += f"🔗 关联概念 ({len(result['expanded_concepts'])} 个):\n"
-            for concept in result['expanded_concepts'][:10]:
+            for concept in result["expanded_concepts"][:10]:
                 output += f"  - {concept}\n"
         if result.get("suggestion"):
             output += f"\n💡 {result['suggestion']}"
 
         return [TextContent(type="text", text=output)]
 
-    async def _kg_get_related(
-            self, arguments: Dict[str, Any]) -> list[TextContent]:
+    async def _kg_get_related(self, arguments: Dict[str, Any]) -> list[TextContent]:
         """kg_get_related 工具实现"""
         concept = arguments.get("concept")
         top_k = arguments.get("top_k", 5)
@@ -352,20 +305,17 @@ class MCPServer:
         """运行 MCP Server"""
         async with stdio_server() as (read_stream, write_stream):
             await self.server.run(
-                read_stream,
-                write_stream,
-                self.server.create_initialization_options()
+                read_stream, write_stream, self.server.create_initialization_options()
             )
 
-    async def _entropy_stats(
-            self, arguments: Dict[str, Any]) -> list[TextContent]:
+    async def _entropy_stats(self, arguments: Dict[str, Any]) -> list[TextContent]:
         """entropy_stats 工具实现"""
         if not self.mft.entropy or not self.mft.entropy.is_enabled():
             return [TextContent(type="text", text="熵系统未启用")]
 
         stats = self.mft.entropy.recalculate_all()
 
-        if 'error' in stats:
+        if "error" in stats:
             return [TextContent(type="text", text=f"错误：{stats['error']}")]
 
         output = "📊 熵系统统计:\n\n"
@@ -375,8 +325,7 @@ class MCPServer:
 
         return [TextContent(type="text", text=output)]
 
-    async def _get_project_entropy(
-            self, arguments: Dict[str, Any]) -> list[TextContent]:
+    async def _get_project_entropy(self, arguments: Dict[str, Any]) -> list[TextContent]:
         """get_project_entropy 工具实现"""
         if not self.mft.entropy or not self.mft.entropy.is_enabled():
             return [TextContent(type="text", text="熵系统未启用")]
@@ -387,7 +336,7 @@ class MCPServer:
 
         result = self.mft.entropy.get_project_entropy(project_path)
 
-        if 'error' in result:
+        if "error" in result:
             return [TextContent(type="text", text=f"错误：{result['error']}")]
 
         output = f"📊 项目熵值：{project_path}\n\n"
@@ -396,13 +345,12 @@ class MCPServer:
         output += f"  记忆数：{result['memory_count']}\n"
         output += f"  趋势：{result.get('trend', 'stable')}\n"
 
-        if result.get('high_entropy_ratio', 0) > 0.5:
+        if result.get("high_entropy_ratio", 0) > 0.5:
             output += "\n⚠️ 警告：超过 50% 的记忆处于高熵状态，建议尽快决策"
 
         return [TextContent(type="text", text=output)]
 
-    async def _entropy_anomaly(
-            self, arguments: Dict[str, Any]) -> list[TextContent]:
+    async def _entropy_anomaly(self, arguments: Dict[str, Any]) -> list[TextContent]:
         """entropy_anomaly 工具实现"""
         if not self.mft.entropy or not self.mft.entropy.is_enabled():
             return [TextContent(type="text", text="熵系统未启用")]
@@ -413,14 +361,14 @@ class MCPServer:
 
         result = self.mft.entropy.detect_entropy_anomaly(slice_id)
 
-        if 'error' in result:
+        if "error" in result:
             return [TextContent(type="text", text=f"错误：{result['error']}")]
 
-        if not result['has_anomaly']:
+        if not result["has_anomaly"]:
             return [TextContent(type="text", text="✅ 未检测到熵值异常")]
 
         output = "⚠️ 检测到熵值异常:\n\n"
-        for anomaly in result['anomalies']:
+        for anomaly in result["anomalies"]:
             output += f"  - {anomaly['type']}: {anomaly['message']}\n"
 
         return [TextContent(type="text", text=output)]

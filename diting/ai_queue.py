@@ -18,23 +18,25 @@ from typing import Callable, Dict, List, Optional
 
 class TaskStatus(Enum):
     """任务状态"""
-    PENDING = 'pending'       # 队列中
-    PROCESSING = 'processing'  # 处理中
-    DONE = 'done'            # 完成
-    FAILED = 'failed'        # 失败
-    RETRY = 'retry'          # 重试中
+
+    PENDING = "pending"  # 队列中
+    PROCESSING = "processing"  # 处理中
+    DONE = "done"  # 完成
+    FAILED = "failed"  # 失败
+    RETRY = "retry"  # 重试中
 
 
 @dataclass
 class AITask:
     """AI 任务"""
+
     task_id: str
     file_path: str
     file_type: str
     memory_path: str
     user_id: str
     status: TaskStatus
-    priority: int = 0         # 优先级 0-10，越高越优先
+    priority: int = 0  # 优先级 0-10，越高越优先
     retry_count: int = 0
     max_retries: int = 3
     created_at: datetime = None
@@ -63,11 +65,9 @@ class AIQueueManager:
         self.config = config or {}
 
         # 队列配置
-        self.max_concurrent = self.config.get('AI_MAX_CONCURRENT', 3)  # 最大并发数
-        self.task_timeout = self.config.get(
-            'AI_TASK_TIMEOUT', 300)    # 任务超时（秒）
-        self.poll_interval = self.config.get(
-            'AI_POLL_INTERVAL', 2)    # 轮询间隔（秒）
+        self.max_concurrent = self.config.get("AI_MAX_CONCURRENT", 3)  # 最大并发数
+        self.task_timeout = self.config.get("AI_TASK_TIMEOUT", 300)  # 任务超时（秒）
+        self.poll_interval = self.config.get("AI_POLL_INTERVAL", 2)  # 轮询间隔（秒）
 
         # 回调函数
         self.on_task_complete: Optional[Callable] = None
@@ -107,18 +107,20 @@ class AIQueueManager:
         """)
 
         # 创建索引
-        self.db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_status ON ai_tasks(status)")
-        self.db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_priority ON ai_tasks(priority DESC)")
-        self.db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_user ON ai_tasks(user_id)")
-        self.db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_created ON ai_tasks(created_at)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_status ON ai_tasks(status)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_priority ON ai_tasks(priority DESC)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_user ON ai_tasks(user_id)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_created ON ai_tasks(created_at)")
         self.db.commit()
 
-    def enqueue(self, file_path: str, file_type: str, memory_path: str,
-                user_id: str = 'default', priority: int = 0) -> str:
+    def enqueue(
+        self,
+        file_path: str,
+        file_type: str,
+        memory_path: str,
+        user_id: str = "default",
+        priority: int = 0,
+    ) -> str:
         """
         添加任务到队列
 
@@ -135,15 +137,24 @@ class AIQueueManager:
         task_id = str(uuid.uuid4())
 
         with self.lock:
-            self.db.execute("""
+            self.db.execute(
+                """
                 INSERT INTO ai_tasks (
                     task_id, file_path, file_type, memory_path, user_id,
                     status, priority, created_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                task_id, file_path, file_type, memory_path, user_id,
-                TaskStatus.PENDING.value, priority, datetime.now().isoformat()
-            ))
+            """,
+                (
+                    task_id,
+                    file_path,
+                    file_type,
+                    memory_path,
+                    user_id,
+                    TaskStatus.PENDING.value,
+                    priority,
+                    datetime.now().isoformat(),
+                ),
+            )
             self.db.commit()
 
         return task_id
@@ -156,32 +167,36 @@ class AIQueueManager:
             任务对象，队列为空返回 None
         """
         with self.lock:
-            cursor = self.db.execute("""
+            cursor = self.db.execute(
+                """
                 SELECT * FROM ai_tasks
                 WHERE status = ?
                 ORDER BY priority DESC, created_at ASC
                 LIMIT 1
-            """, (TaskStatus.PENDING.value,))
+            """,
+                (TaskStatus.PENDING.value,),
+            )
 
             row = cursor.fetchone()
 
             if not row:
                 return None
 
-            task_id = row['task_id']
+            task_id = row["task_id"]
 
             # 更新状态为处理中
-            self.db.execute("""
+            self.db.execute(
+                """
                 UPDATE ai_tasks
                 SET status = ?, started_at = ?
                 WHERE task_id = ?
-            """, (TaskStatus.PROCESSING.value, datetime.now().isoformat(), task_id))
+            """,
+                (TaskStatus.PROCESSING.value, datetime.now().isoformat(), task_id),
+            )
             self.db.commit()
 
             # 重新获取更新后的任务
-            cursor = self.db.execute(
-                "SELECT * FROM ai_tasks WHERE task_id = ?", (task_id,)
-            )
+            cursor = self.db.execute("SELECT * FROM ai_tasks WHERE task_id = ?", (task_id,))
             updated_row = cursor.fetchone()
 
             return self._row_to_task(updated_row)
@@ -195,14 +210,14 @@ class AIQueueManager:
             result: AI 处理结果
         """
         with self.lock:
-            self.db.execute("""
+            self.db.execute(
+                """
                 UPDATE ai_tasks
                 SET status = ?, completed_at = ?, result = ?
                 WHERE task_id = ?
-            """, (
-                TaskStatus.DONE.value, datetime.now().isoformat(),
-                json.dumps(result), task_id
-            ))
+            """,
+                (TaskStatus.DONE.value, datetime.now().isoformat(), json.dumps(result), task_id),
+            )
             self.db.commit()
 
             # 触发回调
@@ -224,18 +239,24 @@ class AIQueueManager:
 
             if task.retry_count < task.max_retries:
                 # 重试
-                self.db.execute("""
+                self.db.execute(
+                    """
                     UPDATE ai_tasks
                     SET status = ?, retry_count = retry_count + 1, error_message = ?
                     WHERE task_id = ?
-                """, (TaskStatus.PENDING.value, error_message, task_id))
+                """,
+                    (TaskStatus.PENDING.value, error_message, task_id),
+                )
             else:
                 # 超过最大重试次数，标记失败
-                self.db.execute("""
+                self.db.execute(
+                    """
                     UPDATE ai_tasks
                     SET status = ?, completed_at = ?, error_message = ?
                     WHERE task_id = ?
-                """, (TaskStatus.FAILED.value, datetime.now().isoformat(), error_message, task_id))
+                """,
+                    (TaskStatus.FAILED.value, datetime.now().isoformat(), error_message, task_id),
+                )
 
                 # 触发回调
                 if self.on_task_failed:
@@ -245,10 +266,7 @@ class AIQueueManager:
 
     def get_task(self, task_id: str) -> Optional[AITask]:
         """获取任务状态"""
-        cursor = self.db.execute(
-            "SELECT * FROM ai_tasks WHERE task_id = ?",
-            (task_id,)
-        )
+        cursor = self.db.execute("SELECT * FROM ai_tasks WHERE task_id = ?", (task_id,))
         row = cursor.fetchone()
 
         if row:
@@ -257,12 +275,15 @@ class AIQueueManager:
 
     def get_user_tasks(self, user_id: str, limit: int = 20) -> List[AITask]:
         """获取用户的任务列表"""
-        cursor = self.db.execute("""
+        cursor = self.db.execute(
+            """
             SELECT * FROM ai_tasks
             WHERE user_id = ?
             ORDER BY created_at DESC
             LIMIT ?
-        """, (user_id, limit))
+        """,
+            (user_id, limit),
+        )
 
         return [self._row_to_task(row) for row in cursor.fetchall()]
 
@@ -274,15 +295,14 @@ class AIQueueManager:
             GROUP BY status
         """)
 
-        status_counts = {row['status']: row['count']
-                         for row in cursor.fetchall()}
+        status_counts = {row["status"]: row["count"] for row in cursor.fetchall()}
 
         return {
-            'pending': status_counts.get('pending', 0),
-            'processing': status_counts.get('processing', 0),
-            'done': status_counts.get('done', 0),
-            'failed': status_counts.get('failed', 0),
-            'retry': status_counts.get('retry', 0)
+            "pending": status_counts.get("pending", 0),
+            "processing": status_counts.get("processing", 0),
+            "done": status_counts.get("done", 0),
+            "failed": status_counts.get("failed", 0),
+            "retry": status_counts.get("retry", 0),
         }
 
     def cleanup_timeout_tasks(self):
@@ -290,16 +310,19 @@ class AIQueueManager:
         timeout_threshold = datetime.now() - timedelta(seconds=self.task_timeout)
 
         with self.lock:
-            self.db.execute("""
+            self.db.execute(
+                """
                 UPDATE ai_tasks
                 SET status = ?, error_message = ?
                 WHERE status = ? AND started_at < ?
-            """, (
-                TaskStatus.PENDING.value,
-                'Task timeout',
-                TaskStatus.PROCESSING.value,
-                timeout_threshold
-            ))
+            """,
+                (
+                    TaskStatus.PENDING.value,
+                    "Task timeout",
+                    TaskStatus.PROCESSING.value,
+                    timeout_threshold,
+                ),
+            )
             self.db.commit()
 
     def start_workers(self, worker_count: int = None):
@@ -311,11 +334,7 @@ class AIQueueManager:
         worker_count = worker_count or self.max_concurrent
 
         for i in range(worker_count):
-            worker = threading.Thread(
-                target=self._worker_loop,
-                name=f"AIWorker-{i}",
-                daemon=True
-            )
+            worker = threading.Thread(target=self._worker_loop, name=f"AIWorker-{i}", daemon=True)
             worker.start()
             self.workers.append(worker)
 
@@ -358,30 +377,30 @@ class AIQueueManager:
 
         # 模拟 AI 结果
         return {
-            'summary': f'{task.file_type} 文件处理完成',
-            'keywords': ['测试', 'AI'],
-            'confidence': 0.8
+            "summary": f"{task.file_type} 文件处理完成",
+            "keywords": ["测试", "AI"],
+            "confidence": 0.8,
         }
 
     def _row_to_task(self, row: sqlite3.Row) -> AITask:
         """数据库行转任务对象"""
         return AITask(
-            task_id=row['task_id'],
-            file_path=row['file_path'],
-            file_type=row['file_type'],
-            memory_path=row['memory_path'],
-            user_id=row['user_id'],
-            status=TaskStatus(row['status']),
-            priority=row['priority'],
-            retry_count=row['retry_count'],
-            max_retries=row['max_retries'],
-            created_at=datetime.fromisoformat(row['created_at']),
-            started_at=datetime.fromisoformat(
-                row['started_at']) if row['started_at'] else None,
-            completed_at=datetime.fromisoformat(
-                row['completed_at']) if row['completed_at'] else None,
-            result=json.loads(row['result']) if row['result'] else None,
-            error_message=row['error_message']
+            task_id=row["task_id"],
+            file_path=row["file_path"],
+            file_type=row["file_type"],
+            memory_path=row["memory_path"],
+            user_id=row["user_id"],
+            status=TaskStatus(row["status"]),
+            priority=row["priority"],
+            retry_count=row["retry_count"],
+            max_retries=row["max_retries"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            started_at=datetime.fromisoformat(row["started_at"]) if row["started_at"] else None,
+            completed_at=(
+                datetime.fromisoformat(row["completed_at"]) if row["completed_at"] else None
+            ),
+            result=json.loads(row["result"]) if row["result"] else None,
+            error_message=row["error_message"],
         )
 
     def close(self):
@@ -391,31 +410,28 @@ class AIQueueManager:
 
 
 # 使用示例
-if __name__ == '__main__':
+if __name__ == "__main__":
     import tempfile
 
     # 创建队列
-    db_fd, db_path = tempfile.mkstemp(suffix='.db')
-    queue = AIQueueManager(db_path, {
-        'AI_MAX_CONCURRENT': 2,
-        'AI_TASK_TIMEOUT': 60
-    })
+    db_fd, db_path = tempfile.mkstemp(suffix=".db")
+    queue = AIQueueManager(db_path, {"AI_MAX_CONCURRENT": 2, "AI_TASK_TIMEOUT": 60})
 
     # 添加任务
     task1_id = queue.enqueue(
-        file_path='/storage/image1.jpg',
-        file_type='image',
-        memory_path='/test/image1',
-        user_id='user_001',
-        priority=5
+        file_path="/storage/image1.jpg",
+        file_type="image",
+        memory_path="/test/image1",
+        user_id="user_001",
+        priority=5,
     )
 
     task2_id = queue.enqueue(
-        file_path='/storage/audio1.ogg',
-        file_type='audio',
-        memory_path='/test/audio1',
-        user_id='user_001',
-        priority=8  # 高优先级
+        file_path="/storage/audio1.ogg",
+        file_type="audio",
+        memory_path="/test/audio1",
+        user_id="user_001",
+        priority=8,  # 高优先级
     )
 
     # 查看队列状态

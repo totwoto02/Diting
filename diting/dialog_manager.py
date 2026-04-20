@@ -26,16 +26,17 @@ class DialogManager:
         self.mft = mft
 
         # 存储路径
-        self.path_hot = "/dialog/hot"     # 热数据
-        self.path_warm = "/dialog/warm"   # 温数据
-        self.path_cold = "/dialog/cold"   # 冷数据
+        self.path_hot = "/dialog/hot"  # 热数据
+        self.path_warm = "/dialog/warm"  # 温数据
+        self.path_cold = "/dialog/cold"  # 冷数据
 
         # 时间阈值（天）
         self.hot_days = 7
         self.warm_days = 30
 
-    def add_dialog(self, session_id: str, role: str, content: str,
-                   metadata: Optional[Dict] = None) -> str:
+    def add_dialog(
+        self, session_id: str, role: str, content: str, metadata: Optional[Dict] = None
+    ) -> str:
         """
         添加对话（存入热数据区）
 
@@ -49,23 +50,20 @@ class DialogManager:
             存储路径
         """
         import time
+
         timestamp = datetime.now()
         # 使用毫秒级时间戳避免冲突
-        path = (f"{self.path_hot}/{session_id}/"
-                f"{timestamp.strftime('%Y%m%d_%H%M%S')}_{role}_"
-                f"{int(time.time()*1000)}")
-
-        self.mft.create(
-            path,
-            "NOTE",
-            content,
-            status="active"
+        path = (
+            f"{self.path_hot}/{session_id}/"
+            f"{timestamp.strftime('%Y%m%d_%H%M%S')}_{role}_"
+            f"{int(time.time()*1000)}"
         )
+
+        self.mft.create(path, "NOTE", content, status="active")
 
         return path
 
-    def add_dialog_batch(self, session_id: str,
-                         messages: List[Dict]) -> List[str]:
+    def add_dialog_batch(self, session_id: str, messages: List[Dict]) -> List[str]:
         """
         批量添加对话
 
@@ -77,15 +75,12 @@ class DialogManager:
             存储路径列表
         """
         import time
+
         paths = []
         for _i, msg in enumerate(messages):
             # 每条消息间隔 1ms 避免冲突
             time.sleep(0.001)
-            path = self.add_dialog(
-                session_id,
-                msg.get("role", "user"),
-                msg.get("content", "")
-            )
+            path = self.add_dialog(session_id, msg.get("role", "user"), msg.get("content", ""))
             paths.append(path)
         return paths
 
@@ -107,11 +102,7 @@ class DialogManager:
 
         # 移到冷数据区
         new_path = f"{self.path_cold}/{path.split('/')[-1]}"
-        self.mft.create(
-            new_path,
-            "NOTE",
-            f"[重要] {reason}\n\n{record['content']}"
-        )
+        self.mft.create(new_path, "NOTE", f"[重要] {reason}\n\n{record['content']}")
 
         # 标记原记录为 archived
         self.mft.update(path, status="archived")
@@ -134,7 +125,7 @@ class DialogManager:
 
         # TODO: 调用 AI 模型生成摘要
         # 简化版：提取前 200 字
-        content = record['content']
+        content = record["content"]
         if len(content) <= 200:
             return content
 
@@ -157,11 +148,7 @@ class DialogManager:
 
         # 存入温数据区
         new_path = f"{self.path_warm}/{path.split('/')[-1]}"
-        self.mft.create(
-            new_path,
-            "NOTE",
-            f"[摘要] {summary}"
-        )
+        self.mft.create(new_path, "NOTE", f"[摘要] {summary}")
 
         # 标记原记录为 archived
         self.mft.update(path, status="archived")
@@ -175,10 +162,7 @@ class DialogManager:
         Returns:
             清理统计 {"hot_to_warm": X, "warm_deleted": Y}
         """
-        stats = {
-            "hot_to_warm": 0,
-            "warm_deleted": 0
-        }
+        stats = {"hot_to_warm": 0, "warm_deleted": 0}
 
         # TODO: 扫描热数据区，超过 7 天的移到温数据区
         # TODO: 扫描温数据区，超过 30 天的删除
@@ -225,7 +209,7 @@ class DialogManager:
         """
         # 搜索该 session 的对话
         results = self.mft.search(session_id, scope=self.path_hot)
-        return sorted(results, key=lambda x: x.get('create_ts', ''))
+        return sorted(results, key=lambda x: x.get("create_ts", ""))
 
     def get_stats(self) -> Dict[str, Any]:
         """获取对话统计信息"""
@@ -234,5 +218,5 @@ class DialogManager:
             "warm_path": self.path_warm,
             "cold_path": self.path_cold,
             "hot_days": self.hot_days,
-            "warm_days": self.warm_days
+            "warm_days": self.warm_days,
         }

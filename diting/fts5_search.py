@@ -64,8 +64,9 @@ class FTS5Search:
 
         self.conn.commit()
 
-    def search(self, query: str, scope: Optional[str] = None,
-               top_k: int = 20) -> List[Dict[str, Any]]:
+    def search(
+        self, query: str, scope: Optional[str] = None, top_k: int = 20
+    ) -> List[Dict[str, Any]]:
         """
         全文搜索
 
@@ -110,15 +111,17 @@ class FTS5Search:
             cursor = self.conn.execute(sql, params)
             results = []
             for row in cursor.fetchall():
-                results.append({
-                    'inode': row[0],
-                    'v_path': row[1],
-                    'type': row[2],
-                    'content': row[3],
-                    'create_ts': row[4],
-                    'update_ts': row[5],
-                    'rank': row[6]
-                })
+                results.append(
+                    {
+                        "inode": row[0],
+                        "v_path": row[1],
+                        "type": row[2],
+                        "content": row[3],
+                        "create_ts": row[4],
+                        "update_ts": row[5],
+                        "rank": row[6],
+                    }
+                )
         except sqlite3.OperationalError as e:
             if "bm2d" in str(e):
                 # 回退到简单搜索（无 BM25 排序）
@@ -143,15 +146,17 @@ class FTS5Search:
                 cursor = self.conn.execute(sql, params)
                 results = []
                 for row in cursor.fetchall():
-                    results.append({
-                        'inode': row[0],
-                        'v_path': row[1],
-                        'type': row[2],
-                        'content': row[3],
-                        'create_ts': row[4],
-                        'update_ts': row[5],
-                        'rank': 0.0  # 无排序
-                    })
+                    results.append(
+                        {
+                            "inode": row[0],
+                            "v_path": row[1],
+                            "type": row[2],
+                            "content": row[3],
+                            "create_ts": row[4],
+                            "update_ts": row[5],
+                            "rank": 0.0,  # 无排序
+                        }
+                    )
             else:
                 raise
 
@@ -181,20 +186,16 @@ class FTS5Search:
 
     def get_search_stats(self) -> Dict[str, Any]:
         """获取搜索统计信息"""
-        cursor = self.conn.execute(
-            "SELECT COUNT(*) FROM mft_fts5"
-        )
+        cursor = self.conn.execute("SELECT COUNT(*) FROM mft_fts5")
         total_docs = cursor.fetchone()[0]
 
-        cursor = self.conn.execute(
-            "SELECT COUNT(*) FROM mft_fts5 WHERE content IS NOT NULL"
-        )
+        cursor = self.conn.execute("SELECT COUNT(*) FROM mft_fts5 WHERE content IS NOT NULL")
         indexed_docs = cursor.fetchone()[0]
 
         return {
-            'total_documents': total_docs,
-            'indexed_documents': indexed_docs,
-            'index_rate': f"{indexed_docs/total_docs*100:.1f}%" if total_docs > 0 else "0%"
+            "total_documents": total_docs,
+            "indexed_documents": indexed_docs,
+            "index_rate": f"{indexed_docs/total_docs*100:.1f}%" if total_docs > 0 else "0%",
         }
 
     def rebuild_index(self):
@@ -215,10 +216,13 @@ class FTS5Search:
             插入的文档 ID
         """
         # 先插入到 mft 表（触发器会自动同步到 FTS5）
-        cursor = self.conn.execute("""
+        cursor = self.conn.execute(
+            """
             INSERT INTO mft (v_path, type, content)
             VALUES (?, ?, ?)
-        """, (v_path, type, content))
+        """,
+            (v_path, type, content),
+        )
         self.conn.commit()
         return cursor.lastrowid
 
@@ -232,21 +236,13 @@ class FTS5Search:
         table_exists = cursor.fetchone() is not None
 
         if not table_exists:
-            return {
-                'table_exists': False,
-                'doc_count': 0,
-                'indexed_docs': 0
-            }
+            return {"table_exists": False, "doc_count": 0, "indexed_docs": 0}
 
         # 获取文档数量
         cursor = self.conn.execute("SELECT COUNT(*) FROM mft_fts5")
         doc_count = cursor.fetchone()[0]
 
-        return {
-            'table_exists': True,
-            'doc_count': doc_count,
-            'indexed_docs': doc_count
-        }
+        return {"table_exists": True, "doc_count": doc_count, "indexed_docs": doc_count}
 
     def delete(self, v_path: str) -> bool:
         """
@@ -259,9 +255,12 @@ class FTS5Search:
             是否删除成功
         """
         # 从 mft 表删除（触发器会自动同步到 FTS5）
-        cursor = self.conn.execute("""
+        cursor = self.conn.execute(
+            """
             UPDATE mft SET deleted = 1 WHERE v_path = ?
-        """, (v_path,))
+        """,
+            (v_path,),
+        )
         self.conn.commit()
         return cursor.rowcount > 0
 

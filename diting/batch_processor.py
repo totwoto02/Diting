@@ -17,6 +17,7 @@ from typing import Callable, Dict, List, Optional
 @dataclass
 class BatchTask:
     """批量任务"""
+
     id: str
     task_type: str
     priority: int
@@ -44,9 +45,8 @@ class BatchProcessor:
         self.config = config or {}
 
         # 批量配置
-        self.batch_size = self.config.get('BATCH_SIZE', 50)
-        self.process_interval = self.config.get(
-            'PROCESS_INTERVAL', 300)  # 5 分钟
+        self.batch_size = self.config.get("BATCH_SIZE", 50)
+        self.process_interval = self.config.get("PROCESS_INTERVAL", 300)  # 5 分钟
 
         # 任务队列
         self.task_queue = PriorityQueue()
@@ -58,8 +58,7 @@ class BatchProcessor:
 
         # 启动后台处理线程
         self.running = True
-        self.worker_thread = threading.Thread(
-            target=self._worker_loop, daemon=True)
+        self.worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
         self.worker_thread.start()
 
     def _init_schema(self):
@@ -94,15 +93,14 @@ class BatchProcessor:
         """)
 
         # 创建索引
-        self.db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_task_status ON batch_tasks(status)")
-        self.db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_task_priority ON batch_tasks(priority)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_task_status ON batch_tasks(status)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_task_priority ON batch_tasks(priority)")
 
         self.db.commit()
 
-    def enqueue(self, task_id: str, task_type: str, data: Dict,
-                priority: int = 0, callback: Callable = None):
+    def enqueue(
+        self, task_id: str, task_type: str, data: Dict, priority: int = 0, callback: Callable = None
+    ):
         """
         添加任务到队列
 
@@ -119,15 +117,18 @@ class BatchProcessor:
             priority=priority,
             data=data,
             created_at=datetime.now(),
-            callback=callback
+            callback=callback,
         )
 
         # 添加到数据库
-        self.db.execute("""
+        self.db.execute(
+            """
             INSERT OR REPLACE INTO batch_tasks
             (id, task_type, priority, data, status, created_at)
             VALUES (?, ?, ?, ?, 'pending', ?)
-        """, (task_id, task_type, priority, json.dumps(data), datetime.now().isoformat()))
+        """,
+            (task_id, task_type, priority, json.dumps(data), datetime.now().isoformat()),
+        )
         self.db.commit()
 
         # 添加到队列
@@ -152,11 +153,14 @@ class BatchProcessor:
                 tasks.append(task)
 
                 # 更新数据库状态
-                self.db.execute("""
+                self.db.execute(
+                    """
                     UPDATE batch_tasks
                     SET status = 'processing', started_at = ?
                     WHERE id = ?
-                """, (datetime.now().isoformat(), task.id))
+                """,
+                    (datetime.now().isoformat(), task.id),
+                )
 
             except Exception:
                 break
@@ -164,11 +168,7 @@ class BatchProcessor:
         self.db.commit()
         return tasks
 
-    def complete_task(
-            self,
-            task_id: str,
-            result: Dict = None,
-            error: str = None):
+    def complete_task(self, task_id: str, result: Dict = None, error: str = None):
         """
         完成任务
 
@@ -177,21 +177,23 @@ class BatchProcessor:
             result: 处理结果
             error: 错误信息
         """
-        self.db.execute("""
+        self.db.execute(
+            """
             UPDATE batch_tasks
             SET status = ?, result = ?, error_message = ?, completed_at = ?
             WHERE id = ?
-        """, ('completed' if not error else 'failed',
-              json.dumps(result) if result else None,
-              error,
-              datetime.now().isoformat(),
-              task_id))
+        """,
+            (
+                "completed" if not error else "failed",
+                json.dumps(result) if result else None,
+                error,
+                datetime.now().isoformat(),
+                task_id,
+            ),
+        )
         self.db.commit()
 
-    def process_batch(
-            self,
-            tasks: List[BatchTask],
-            processor: Callable) -> Dict:
+    def process_batch(self, tasks: List[BatchTask], processor: Callable) -> Dict:
         """
         处理批量任务
 
@@ -225,19 +227,22 @@ class BatchProcessor:
 
         # 记录日志
         batch_id = f"batch_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        self.db.execute("""
+        self.db.execute(
+            """
             INSERT INTO batch_log
             (batch_id, task_count, success_count, failed_count, duration_seconds)
             VALUES (?, ?, ?, ?, ?)
-        """, (batch_id, len(tasks), success_count, failed_count, duration))
+        """,
+            (batch_id, len(tasks), success_count, failed_count, duration),
+        )
         self.db.commit()
 
         return {
-            'batch_id': batch_id,
-            'total': len(tasks),
-            'success': success_count,
-            'failed': failed_count,
-            'duration': duration
+            "batch_id": batch_id,
+            "total": len(tasks),
+            "success": success_count,
+            "failed": failed_count,
+            "duration": duration,
         }
 
     def _worker_loop(self):
@@ -260,23 +265,23 @@ class BatchProcessor:
     def _default_processor(self, task: BatchTask) -> Dict:
         """默认处理器"""
         # 根据任务类型执行不同处理
-        if task.task_type == 'ai_summary':
+        if task.task_type == "ai_summary":
             # TODO: 批量 AI 概括
-            return {'status': 'processed'}
+            return {"status": "processed"}
 
-        elif task.task_type == 'entropy_calc':
+        elif task.task_type == "entropy_calc":
             # TODO: 批量熵计算
-            return {'status': 'processed'}
+            return {"status": "processed"}
 
-        elif task.task_type == 'temp_calc':
+        elif task.task_type == "temp_calc":
             # TODO: 批量温度计算
-            return {'status': 'processed'}
+            return {"status": "processed"}
 
-        elif task.task_type == 'file_cleanup':
+        elif task.task_type == "file_cleanup":
             # TODO: 批量文件清理
-            return {'status': 'processed'}
+            return {"status": "processed"}
 
-        return {'status': 'unknown_task_type'}
+        return {"status": "unknown_task_type"}
 
     def get_queue_status(self) -> Dict:
         """获取队列状态"""
@@ -286,23 +291,25 @@ class BatchProcessor:
             GROUP BY status
         """)
 
-        status_counts = {row['status']: row['count']
-                         for row in cursor.fetchall()}
+        status_counts = {row["status"]: row["count"] for row in cursor.fetchall()}
 
         return {
-            'pending': status_counts.get('pending', 0),
-            'processing': status_counts.get('processing', 0),
-            'completed': status_counts.get('completed', 0),
-            'failed': status_counts.get('failed', 0)
+            "pending": status_counts.get("pending", 0),
+            "processing": status_counts.get("processing", 0),
+            "completed": status_counts.get("completed", 0),
+            "failed": status_counts.get("failed", 0),
         }
 
     def get_batch_history(self, limit: int = 10) -> List[Dict]:
         """获取批量处理历史"""
-        cursor = self.db.execute("""
+        cursor = self.db.execute(
+            """
             SELECT * FROM batch_log
             ORDER BY created_at DESC
             LIMIT ?
-        """, (limit,))
+        """,
+            (limit,),
+        )
 
         return [dict(row) for row in cursor.fetchall()]
 
@@ -318,24 +325,19 @@ class BatchProcessor:
 
 
 # 使用示例
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
     import tempfile
 
     # 创建测试数据库
-    db_fd, db_path = tempfile.mkstemp(suffix='.db')
+    db_fd, db_path = tempfile.mkstemp(suffix=".db")
 
     # 创建批量处理器
-    processor = BatchProcessor(db_path, {'BATCH_SIZE': 10})
+    processor = BatchProcessor(db_path, {"BATCH_SIZE": 10})
 
     # 添加任务
     for i in range(5):
-        processor.enqueue(
-            f'task_{i}',
-            'ai_summary',
-            {'data': f'Test data {i}'},
-            priority=5
-        )
+        processor.enqueue(f"task_{i}", "ai_summary", {"data": f"Test data {i}"}, priority=5)
 
     # 检查队列状态
     status = processor.get_queue_status()

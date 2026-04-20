@@ -23,7 +23,7 @@ def migrate_add_lcn_pointers(db_path: str) -> bool:
         cursor = conn.execute("PRAGMA table_info(mft)")
         columns = [row[1] for row in cursor.fetchall()]
 
-        if 'lcn_pointers' in columns:
+        if "lcn_pointers" in columns:
             print("✓ lcn_pointers 字段已存在，跳过迁移")
             return True
 
@@ -65,7 +65,7 @@ def verify_migration(db_path: str) -> bool:
         cursor = conn.execute("PRAGMA table_info(mft)")
         columns = [row[1] for row in cursor.fetchall()]
 
-        if 'lcn_pointers' not in columns:
+        if "lcn_pointers" not in columns:
             print("✗ 验证失败：lcn_pointers 字段不存在")
             return False
 

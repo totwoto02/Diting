@@ -41,7 +41,7 @@ class Assembler:
         if not pointers:
             # 没有切片，直接读取原文
             record = self.mft.read(v_path)
-            return record['content'] if record else None
+            return record["content"] if record else None
 
         # 读取主记录获取原始内容（作为基础）
         main_record = self.mft.read(v_path)
@@ -55,13 +55,9 @@ class Assembler:
 
         # 临时方案：直接返回主记录内容
         # TODO: 实现真正的 chunk 捞取和拼装
-        return main_record.get('content')
+        return main_record.get("content")
 
-    def assemble_from_pointers(
-        self,
-        pointers: List[Dict[str, Any]],
-        full_text: str
-    ) -> str:
+    def assemble_from_pointers(self, pointers: List[Dict[str, Any]], full_text: str) -> str:
         """
         从指针和完整文本中还原（用于测试）
 
@@ -76,18 +72,18 @@ class Assembler:
             return full_text
 
         # 按 chunk_id 排序
-        sorted_pointers = sorted(pointers, key=lambda p: p['chunk_id'])
+        sorted_pointers = sorted(pointers, key=lambda p: p["chunk_id"])
 
         # 捞取切片并拼装
         slices = []
         for ptr in sorted_pointers:
-            offset = ptr['offset']
-            length = ptr['length']
-            slice_content = full_text[offset:offset + length]
+            offset = ptr["offset"]
+            length = ptr["length"]
+            slice_content = full_text[offset : offset + length]
             slices.append(slice_content)
 
         # 简单拼接（实际需要考虑重叠去重）
-        return ''.join(slices)
+        return "".join(slices)
 
     def verify_assembly(self, assembled: str, expected: str) -> bool:
         """
@@ -102,8 +98,7 @@ class Assembler:
         """
         return assembled == expected
 
-    def get_assembly_stats(
-            self, pointers: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def get_assembly_stats(self, pointers: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         获取拼装统计信息
 
@@ -117,6 +112,7 @@ class Assembler:
             return {"chunk_count": 0, "total_length": 0}
 
         return {
-            "chunk_count": len(pointers), "total_length": sum(
-                p['length'] for p in pointers), "avg_chunk_size": sum(
-                p['length'] for p in pointers) / len(pointers)}
+            "chunk_count": len(pointers),
+            "total_length": sum(p["length"] for p in pointers),
+            "avg_chunk_size": sum(p["length"] for p in pointers) / len(pointers),
+        }

@@ -30,7 +30,7 @@ async def _kg_search(self, arguments: Dict[str, Any]) -> list[TextContent]:
     output = f"✅ 找到概念：{result.get('concept', query)}\n\n"
     if result.get("expanded_concepts"):
         output += f"🔗 关联概念 ({len(result['expanded_concepts'])} 个):\n"
-        for concept in result['expanded_concepts'][:10]:
+        for concept in result["expanded_concepts"][:10]:
             output += f"  - {concept}\n"
     if result.get("suggestion"):
         output += f"\n💡 {result['suggestion']}"
@@ -38,8 +38,7 @@ async def _kg_search(self, arguments: Dict[str, Any]) -> list[TextContent]:
     return [TextContent(type="text", text=output)]
 
 
-async def _kg_get_related(
-        self, arguments: Dict[str, Any]) -> list[TextContent]:
+async def _kg_get_related(self, arguments: Dict[str, Any]) -> list[TextContent]:
     """kg_get_related 工具实现"""
     concept = arguments.get("concept")
     top_k = arguments.get("top_k", 5)

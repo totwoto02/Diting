@@ -52,7 +52,7 @@ class LocalStorage(StorageBackend):
         full_path = self.root_path / file_path
         full_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(full_path, 'wb') as f:
+        with open(full_path, "wb") as f:
             f.write(data)
 
         return str(full_path)
@@ -64,7 +64,7 @@ class LocalStorage(StorageBackend):
         if not full_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        with open(full_path, 'rb') as f:
+        with open(full_path, "rb") as f:
             return f.read()
 
     def delete(self, file_path: str):
@@ -90,10 +90,10 @@ class S3Storage(StorageBackend):
         Args:
             config: S3 配置 {bucket, region, access_key, secret_key}
         """
-        self.bucket = config.get('bucket', 'diting-storage')
-        self.region = config.get('region', 'us-east-1')
-        self.access_key = config.get('access_key')
-        self.secret_key = config.get('secret_key')
+        self.bucket = config.get("bucket", "diting-storage")
+        self.region = config.get("region", "us-east-1")
+        self.access_key = config.get("access_key")
+        self.secret_key = config.get("secret_key")
 
         # TODO: 初始化 boto3 客户端
         # self.client = boto3.client('s3', ...)
@@ -138,10 +138,10 @@ class OSSStorage(StorageBackend):
         Args:
             config: OSS 配置 {bucket, endpoint, access_key_id, access_key_secret}
         """
-        self.bucket = config.get('bucket', 'diting-storage')
-        self.endpoint = config.get('endpoint', 'oss-cn-hangzhou.aliyuncs.com')
-        self.access_key_id = config.get('access_key_id')
-        self.access_key_secret = config.get('access_key_secret')
+        self.bucket = config.get("bucket", "diting-storage")
+        self.endpoint = config.get("endpoint", "oss-cn-hangzhou.aliyuncs.com")
+        self.access_key_id = config.get("access_key_id")
+        self.access_key_secret = config.get("access_key_secret")
 
         # TODO: 初始化 oss2 客户端
         # self.auth = oss2.Auth(...)
@@ -180,25 +180,23 @@ class StorageManager:
 
     def _create_backend(self) -> StorageBackend:
         """创建存储后端"""
-        backend_type = self.config.get('backend', 'local')
+        backend_type = self.config.get("backend", "local")
 
-        if backend_type == 'local':
-            root_path = self.config.get(
-                'local', {}).get(
-                'root_path', '/tmp/diting-storage')
+        if backend_type == "local":
+            root_path = self.config.get("local", {}).get("root_path", "/tmp/diting-storage")
             return LocalStorage(root_path)
 
-        elif backend_type == 's3':
-            s3_config = self.config.get('s3', {})
+        elif backend_type == "s3":
+            s3_config = self.config.get("s3", {})
             return S3Storage(s3_config)
 
-        elif backend_type == 'oss':
-            oss_config = self.config.get('oss', {})
+        elif backend_type == "oss":
+            oss_config = self.config.get("oss", {})
             return OSSStorage(oss_config)
 
         else:
             # 默认本地存储
-            return LocalStorage('/tmp/diting-storage')
+            return LocalStorage("/tmp/diting-storage")
 
     def save(self, file_path: str, data: bytes) -> str:
         """保存文件"""
@@ -218,39 +216,36 @@ class StorageManager:
 
 
 # 使用示例
-if __name__ == '__main__':
+if __name__ == "__main__":
     import tempfile
 
     # 创建临时目录
     temp_dir = tempfile.mkdtemp()
 
     # 创建存储管理器
-    config = {
-        'backend': 'local',
-        'local': {'root_path': temp_dir}
-    }
+    config = {"backend": "local", "local": {"root_path": temp_dir}}
     storage = StorageManager(config)
 
     print("✅ 存储管理器初始化成功")
 
     # 测试保存
     data = b"Hello, World!"
-    path = storage.save('test/file.txt', data)
+    path = storage.save("test/file.txt", data)
     print(f"✅ 保存文件：{path}")
 
     # 测试加载
-    loaded_data = storage.load('test/file.txt')
+    loaded_data = storage.load("test/file.txt")
     assert loaded_data == data
     print(f"✅ 加载文件：{loaded_data}")
 
     # 测试存在检查
-    exists = storage.exists('test/file.txt')
+    exists = storage.exists("test/file.txt")
     assert exists
     print(f"✅ 文件存在：{exists}")
 
     # 测试删除
-    storage.delete('test/file.txt')
-    exists = storage.exists('test/file.txt')
+    storage.delete("test/file.txt")
+    exists = storage.exists("test/file.txt")
     assert not exists
     print(f"✅ 删除文件：{exists}")
 

@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class Concept:
     """概念数据结构"""
+
     id: int
     name: str
     type: str
@@ -25,6 +26,7 @@ class Concept:
 @dataclass
 class Edge:
     """边数据结构"""
+
     id: int
     from_concept: str
     to_concept: str
@@ -88,12 +90,9 @@ class KnowledgeGraphV2:
         """)
 
         # 索引
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_concept_name ON kg_concepts(name)")
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_edge_from ON kg_edges(from_concept)")
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_edge_to ON kg_edges(to_concept)")
+        self.conn.execute("CREATE INDEX IF NOT EXISTS idx_concept_name ON kg_concepts(name)")
+        self.conn.execute("CREATE INDEX IF NOT EXISTS idx_edge_from ON kg_edges(from_concept)")
+        self.conn.execute("CREATE INDEX IF NOT EXISTS idx_edge_to ON kg_edges(to_concept)")
 
         self.conn.commit()
 
@@ -106,8 +105,7 @@ class KnowledgeGraphV2:
         finally:
             cursor.close()
 
-    def add_concept(self, name: str, type: str,
-                    aliases: Optional[List[str]] = None) -> int:
+    def add_concept(self, name: str, type: str, aliases: Optional[List[str]] = None) -> int:
         """
         添加概念
 
@@ -121,20 +119,26 @@ class KnowledgeGraphV2:
         """
         with self.get_cursor() as cursor:
             # 插入概念
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO kg_concepts (name, type, aliases, created_at)
                 VALUES (?, ?, ?, ?)
-            """, (name, type, json.dumps(aliases or []), time.time()))
+            """,
+                (name, type, json.dumps(aliases or []), time.time()),
+            )
 
             concept_id = cursor.lastrowid
 
             # 插入别名映射
             if aliases:
                 for alias in aliases:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR REPLACE INTO kg_aliases (alias, concept_id)
                         VALUES (?, ?)
-                    """, (alias, concept_id))
+                    """,
+                        (alias, concept_id),
+                    )
 
             self.conn.commit()
             return concept_id
@@ -152,8 +156,7 @@ class KnowledgeGraphV2:
         """
         with self.get_cursor() as cursor:
             # 获取概念 ID
-            cursor.execute(
-                "SELECT id FROM kg_concepts WHERE name = ?", (concept_name,))
+            cursor.execute("SELECT id FROM kg_concepts WHERE name = ?", (concept_name,))
             row = cursor.fetchone()
             if not row:
                 return False
@@ -161,20 +164,25 @@ class KnowledgeGraphV2:
             concept_id = row[0]
 
             # 插入别名
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO kg_aliases (alias, concept_id)
                 VALUES (?, ?)
-            """, (alias, concept_id))
+            """,
+                (alias, concept_id),
+            )
 
             # 更新概念的 aliases 字段
-            cursor.execute(
-                "SELECT aliases FROM kg_concepts WHERE id = ?", (concept_id,))
+            cursor.execute("SELECT aliases FROM kg_concepts WHERE id = ?", (concept_id,))
             existing_aliases = json.loads(cursor.fetchone()[0])
             if alias not in existing_aliases:
                 existing_aliases.append(alias)
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE kg_concepts SET aliases = ? WHERE id = ?
-                """, (json.dumps(existing_aliases), concept_id))
+                """,
+                    (json.dumps(existing_aliases), concept_id),
+                )
 
             self.conn.commit()
             return True
@@ -191,11 +199,14 @@ class KnowledgeGraphV2:
         """
         with self.get_cursor() as cursor:
             # 先尝试直接查找
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, name, type, aliases, created_at
                 FROM kg_concepts
                 WHERE name = ?
-            """, (name,))
+            """,
+                (name,),
+            )
             row = cursor.fetchone()
 
             if row:
@@ -204,16 +215,19 @@ class KnowledgeGraphV2:
                     "name": row[1],
                     "type": row[2],
                     "aliases": json.loads(row[3]),
-                    "created_at": row[4]
+                    "created_at": row[4],
                 }
 
             # 尝试通过别名查找
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT c.id, c.name, c.type, c.aliases, c.created_at
                 FROM kg_concepts c
                 JOIN kg_aliases a ON c.id = a.concept_id
                 WHERE a.alias = ?
-            """, (name,))
+            """,
+                (name,),
+            )
             row = cursor.fetchone()
 
             if row:
@@ -222,18 +236,19 @@ class KnowledgeGraphV2:
                     "name": row[1],
                     "type": row[2],
                     "aliases": json.loads(row[3]),
-                    "created_at": row[4]
+                    "created_at": row[4],
                 }
 
             return None
 
     def add_edge(
-            self,
-            from_concept: str,
-            to_concept: str,
-            relation: str,
-            weight: float = 1.0,
-            timestamp: Optional[float] = None) -> int:
+        self,
+        from_concept: str,
+        to_concept: str,
+        relation: str,
+        weight: float = 1.0,
+        timestamp: Optional[float] = None,
+    ) -> int:
         """
         添加边
 
@@ -248,17 +263,19 @@ class KnowledgeGraphV2:
             edge_id: 边 ID
         """
         with self.get_cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO kg_edges
                 (from_concept, to_concept, relation, weight, timestamp)
                 VALUES (?, ?, ?, ?, ?)
-            """, (from_concept, to_concept, relation, weight, timestamp or time.time()))
+            """,
+                (from_concept, to_concept, relation, weight, timestamp or time.time()),
+            )
 
             self.conn.commit()
             return cursor.lastrowid
 
-    def update_edge_weight(self, from_concept: str,
-                           to_concept: str, new_weight: float) -> bool:
+    def update_edge_weight(self, from_concept: str, to_concept: str, new_weight: float) -> bool:
         """
         更新边权重
 
@@ -271,11 +288,14 @@ class KnowledgeGraphV2:
             True 如果更新成功
         """
         with self.get_cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE kg_edges
                 SET weight = ?
                 WHERE from_concept = ? AND to_concept = ?
-            """, (new_weight, from_concept, to_concept))
+            """,
+                (new_weight, from_concept, to_concept),
+            )
 
             self.conn.commit()
             return cursor.rowcount > 0
@@ -293,12 +313,15 @@ class KnowledgeGraphV2:
         with self.get_cursor() as cursor:
             # 应用时间衰减
             current_time = time.time()
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT from_concept, to_concept, relation, weight, timestamp
                 FROM kg_edges
                 WHERE from_concept = ? OR to_concept = ?
                 ORDER BY weight DESC
-            """, (concept_name, concept_name))
+            """,
+                (concept_name, concept_name),
+            )
 
             edges = []
             for row in cursor.fetchall():
@@ -310,19 +333,22 @@ class KnowledgeGraphV2:
                 decay_factor = 0.5 ** (time_diff / (30 * 86400))  # 30 天半衰期
                 decayed_weight = original_weight * decay_factor
 
-                edges.append({
-                    "from_concept": row[0],
-                    "to_concept": row[1],
-                    "relation": row[2],
-                    "weight": decayed_weight,
-                    "original_weight": original_weight,
-                    "timestamp": timestamp
-                })
+                edges.append(
+                    {
+                        "from_concept": row[0],
+                        "to_concept": row[1],
+                        "relation": row[2],
+                        "weight": decayed_weight,
+                        "original_weight": original_weight,
+                        "timestamp": timestamp,
+                    }
+                )
 
             return edges
 
-    def get_related_concepts(self, concept_name: str, top_k: int = 5,
-                             max_depth: int = 2) -> List[Dict[str, Any]]:
+    def get_related_concepts(
+        self, concept_name: str, top_k: int = 5, max_depth: int = 2
+    ) -> List[Dict[str, Any]]:
         """
         获取相关概念（使用 SQLite 递归 CTE，性能提升 3-5 倍）
 
@@ -336,7 +362,8 @@ class KnowledgeGraphV2:
         """
         # 使用递归 CTE 实现图遍历
         with self.get_cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 WITH RECURSIVE related_concepts AS (
                     -- 基础情况：直接相关的概念
                     SELECT
@@ -374,7 +401,9 @@ class KnowledgeGraphV2:
                 GROUP BY to_concept
                 ORDER BY total_weight DESC
                 LIMIT ?
-            """, (concept_name, max_depth, concept_name, top_k))
+            """,
+                (concept_name, max_depth, concept_name, top_k),
+            )
 
             return [
                 {
@@ -382,13 +411,14 @@ class KnowledgeGraphV2:
                     "relation": row[1],
                     "weight": row[2],
                     "path_count": row[3],
-                    "depth": row[4]
+                    "depth": row[4],
                 }
                 for row in cursor.fetchall()
             ]
 
     def get_related_concepts_python(
-            self, concept_name: str, top_k: int = 5) -> List[Dict[str, Any]]:
+        self, concept_name: str, top_k: int = 5
+    ) -> List[Dict[str, Any]]:
         """
         获取相关概念（Python 实现，向后兼容）
 
@@ -404,25 +434,28 @@ class KnowledgeGraphV2:
         related = []
         for edge in edges:
             if edge["from_concept"] == concept_name:
-                related.append({
-                    "concept": edge["to_concept"],
-                    "relation": edge["relation"],
-                    "weight": edge["weight"]
-                })
+                related.append(
+                    {
+                        "concept": edge["to_concept"],
+                        "relation": edge["relation"],
+                        "weight": edge["weight"],
+                    }
+                )
             else:
-                related.append({
-                    "concept": edge["from_concept"],
-                    "relation": edge["relation"],
-                    "weight": edge["weight"]
-                })
+                related.append(
+                    {
+                        "concept": edge["from_concept"],
+                        "relation": edge["relation"],
+                        "weight": edge["weight"],
+                    }
+                )
 
         # 按权重排序
         related.sort(key=lambda x: x["weight"], reverse=True)
 
         return related[:top_k]
 
-    def search_with_expansion(
-            self, query: str, max_depth: int = 2) -> Dict[str, Any]:
+    def search_with_expansion(self, query: str, max_depth: int = 2) -> Dict[str, Any]:
         """
         搜索并扩展相关概念
 
@@ -436,11 +469,7 @@ class KnowledgeGraphV2:
         concept = self.get_concept_by_name(query)
 
         if not concept:
-            return {
-                "found": False,
-                "expanded_concepts": [],
-                "suggestion": None
-            }
+            return {"found": False, "expanded_concepts": [], "suggestion": None}
 
         # BFS 扩展
         expanded = set()
@@ -461,9 +490,11 @@ class KnowledgeGraphV2:
             "found": True,
             "concept": concept["name"],
             "expanded_concepts": list(expanded),
-            "suggestion": (f"搜索 '{query}' 时，可能也关心："
-                           f"{', '.join(list(expanded)[:3])}"
-                           if expanded else None)
+            "suggestion": (
+                f"搜索 '{query}' 时，可能也关心：" f"{', '.join(list(expanded)[:3])}"
+                if expanded
+                else None
+            ),
         }
 
     def get_stats(self) -> Dict[str, Any]:
@@ -478,8 +509,8 @@ class KnowledgeGraphV2:
             return {
                 "concept_count": concept_count,
                 "edge_count": edge_count,
-                "avg_edges_per_concept": edge_count /
-                concept_count if concept_count > 0 else 0}
+                "avg_edges_per_concept": edge_count / concept_count if concept_count > 0 else 0,
+            }
 
     def close(self):
         """关闭数据库连接"""

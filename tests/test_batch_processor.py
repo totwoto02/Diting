@@ -90,12 +90,13 @@ class TestBatchProcessorEnqueue:
         processor = BatchProcessor(db_path)
         
         task_id = processor.enqueue(
-            task_type="test",
-            data={"key": "value"},
+            "task_001",
+            "test",
+            {"key": "value"},
             priority=5
         )
         
-        assert task_id is not None
+        assert task_id == "task_001"
         
         processor.stop()
 
@@ -105,12 +106,13 @@ class TestBatchProcessorEnqueue:
         processor = BatchProcessor(db_path)
         
         task_id = processor.enqueue(
-            task_type="urgent",
-            data={},
+            "task_urgent",
+            "urgent",
+            {},
             priority=100
         )
         
-        assert task_id is not None
+        assert task_id == "task_urgent"
         
         processor.stop()
 
@@ -120,11 +122,12 @@ class TestBatchProcessorEnqueue:
         processor = BatchProcessor(db_path)
         
         task_id = processor.enqueue(
-            task_type="test",
-            data={}
+            "task_empty",
+            "test",
+            {}
         )
         
-        assert task_id is not None
+        assert task_id == "task_empty"
         
         processor.stop()
 
@@ -217,9 +220,9 @@ class TestBatchProcessorQueue:
         processor = BatchProcessor(db_path)
         
         # 入队一些任务
-        processor.enqueue("type1", {}, 0)
-        processor.enqueue("type1", {}, 0)
-        processor.enqueue("type2", {}, 0)
+        processor.enqueue("task_1", "type1", {}, 0)
+        processor.enqueue("task_2", "type1", {}, 0)
+        processor.enqueue("task_3", "type2", {}, 0)
         
         status = processor.get_queue_status()
         
@@ -258,7 +261,7 @@ class TestBatchProcessorEdgeCases:
         processor = BatchProcessor(db_path)
         
         for i in range(10):
-            processor.enqueue("same_type", {"index": i}, 0)
+            processor.enqueue(f"task_{i}", "same_type", {"index": i}, 0)
         
         status = processor.get_queue_status()
         assert status["total"] >= 10
@@ -271,9 +274,9 @@ class TestBatchProcessorEdgeCases:
         processor = BatchProcessor(db_path)
         
         large_data = {"data": "A" * 10000}
-        task_id = processor.enqueue("test", large_data, 0)
+        task_id = processor.enqueue("task_large", "test", large_data, 0)
         
-        assert task_id is not None
+        assert task_id == "task_large"
         
         processor.stop()
 
@@ -282,6 +285,6 @@ class TestBatchProcessorEdgeCases:
         db_path = str(tmp_path / "batch.db")
         processor = BatchProcessor(db_path)
         
-        processor.enqueue("test", {}, 0)
+        processor.enqueue("task_1", "test", {}, 0)
         
         processor.close()
