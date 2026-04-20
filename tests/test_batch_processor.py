@@ -63,7 +63,6 @@ class TestBatchProcessorInit:
         assert processor.process_interval == 300
         assert processor.running is True
         
-        # 停止后台线程
         processor.stop()
 
     def test_init_with_config(self, tmp_path):
@@ -89,14 +88,20 @@ class TestBatchProcessorEnqueue:
         db_path = str(tmp_path / "batch.db")
         processor = BatchProcessor(db_path)
         
-        task_id = processor.enqueue(
+        # enqueue 返回 None，但会在数据库创建任务
+        result = processor.enqueue(
             "task_001",
             "test",
             {"key": "value"},
             priority=5
         )
         
-        assert task_id == "task_001"
+        # enqueue 返回 None，但任务已入队
+        assert result is None
+        
+        # 验证任务在队列中
+        status = processor.get_queue_status()
+        assert status["pending"] >= 1
         
         processor.stop()
 
@@ -105,14 +110,17 @@ class TestBatchProcessorEnqueue:
         db_path = str(tmp_path / "batch.db")
         processor = BatchProcessor(db_path)
         
-        task_id = processor.enqueue(
+        result = processor.enqueue(
             "task_urgent",
             "urgent",
             {},
             priority=100
         )
         
-        assert task_id == "task_urgent"
+        assert result is None
+        
+        status = processor.get_queue_status()
+        assert status["pending"] >= 1
         
         processor.stop()
 
@@ -121,13 +129,16 @@ class TestBatchProcessorEnqueue:
         db_path = str(tmp_path / "batch.db")
         processor = BatchProcessor(db_path)
         
-        task_id = processor.enqueue(
+        result = processor.enqueue(
             "task_empty",
             "test",
             {}
         )
         
-        assert task_id == "task_empty"
+        assert result is None
+        
+        status = processor.get_queue_status()
+        assert status["pending"] >= 1
         
         processor.stop()
 
@@ -142,10 +153,10 @@ class TestBatchProcessorDequeue:
         
         # 入队一些任务
         for i in range(5):
-            processor.enqueue("test", {"index": i})
+            processor.enqueue(f"task_{i}", "test", {"index": i})
         
         # 出队
-        batch = processor.dequeue_batch(max_size=3)
+        batch = processor.dequeue_batch(batch_size=3)
         
         assert len(batch) <= 3
         
@@ -156,7 +167,7 @@ class TestBatchProcessorDequeue:
         db_path = str(tmp_path / "batch.db")
         processor = BatchProcessor(db_path)
         
-        batch = processor.dequeue_batch(max_size=5)
+        batch = processor.dequeue_batch(batch_size=5)
         
         assert len(batch) == 0
         
@@ -172,15 +183,20 @@ class TestBatchProcessorProcess:
         processor = BatchProcessor(db_path)
         
         # 入队任务
-        task_id = processor.enqueue("test", {"data": "value"})
+        processor.enqueue("task_1", "test", {"data": "value"})
         
-        # 出队并处理
-        batch = processor.dequeue_batch(max_size=1)
+        # 出队
+        batch = processor.dequeue_batch(batch_size=1)
         
         if batch:
-            result = processor.process_batch(batch)
+            # 定义一个简单的处理器
+            def simple_processor(task):
+                return {"processed": True}
             
-            assert result is not None
+            # 处理批次
+            result = processor.process_batch(batch, simple_processor)
+            
+            assert isinstance(result, dict)
         
         processor.stop()
 
@@ -189,9 +205,9 @@ class TestBatchProcessorProcess:
         db_path = str(tmp_path / "batch.db")
         processor = BatchProcessor(db_path)
         
-        task_id = processor.enqueue("test", {})
+        processor.enqueue("task_1", "test", {})
         
-        processor.complete_task(task_id, result={"success": True})
+        processor.complete_task("task_1", result={"success": True})
         
         processor.stop()
 
@@ -200,10 +216,10 @@ class TestBatchProcessorProcess:
         db_path = str(tmp_path / "batch.db")
         processor = BatchProcessor(db_path)
         
-        task_id = processor.enqueue("test", {})
+        processor.enqueue("task_1", "test", {})
         
         processor.complete_task(
-            task_id,
+            "task_1",
             result=None,
             error="Test error"
         )
@@ -226,8 +242,9 @@ class TestBatchProcessorQueue:
         
         status = processor.get_queue_status()
         
-        assert "total" in status
-        assert status["total"] >= 3
+        # 状态包含 pending, processing, completed, failed
+        assert "pending" in status
+        assert status["pending"] >= 3
         
         processor.stop()
 
@@ -264,7 +281,7 @@ class TestBatchProcessorEdgeCases:
             processor.enqueue(f"task_{i}", "same_type", {"index": i}, 0)
         
         status = processor.get_queue_status()
-        assert status["total"] >= 10
+        assert status["pending"] >= 10
         
         processor.stop()
 
@@ -274,9 +291,12 @@ class TestBatchProcessorEdgeCases:
         processor = BatchProcessor(db_path)
         
         large_data = {"data": "A" * 10000}
-        task_id = processor.enqueue("task_large", "test", large_data, 0)
+        result = processor.enqueue("task_large", "test", large_data, 0)
         
-        assert task_id == "task_large"
+        assert result is None
+        
+        status = processor.get_queue_status()
+        assert status["pending"] >= 1
         
         processor.stop()
 

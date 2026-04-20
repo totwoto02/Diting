@@ -2,6 +2,8 @@
 FTS5 Search 全文检索测试用例
 
 目标：覆盖率 87% → 90%+
+
+注意：FTS5 虚拟表依赖 mft 表存在（触发器需要）
 """
 
 import pytest
@@ -10,8 +12,9 @@ import tempfile
 from diting.fts5_search import FTS5Search
 
 
-def create_mft_table(conn):
-    """辅助函数：创建 MFT 表"""
+def init_db_with_mft(db_path):
+    """辅助函数：初始化数据库并创建 MFT 表"""
+    conn = sqlite3.connect(db_path)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS mft (
             inode INTEGER PRIMARY KEY,
@@ -24,6 +27,7 @@ def create_mft_table(conn):
         )
     """)
     conn.commit()
+    conn.close()
 
 
 class TestFTS5SearchInit:
@@ -32,11 +36,7 @@ class TestFTS5SearchInit:
     def test_init(self, tmp_path):
         """测试初始化"""
         db_path = str(tmp_path / "search.db")
-        # 先创建 mft 表
-        import sqlite3
-        conn = sqlite3.connect(db_path)
-        create_mft_table(conn)
-        conn.close()
+        init_db_with_mft(db_path)
         
         search = FTS5Search(db_path)
         
@@ -46,9 +46,7 @@ class TestFTS5SearchInit:
     def test_init_creates_fts5_table(self, tmp_path):
         """测试初始化创建 FTS5 表"""
         db_path = str(tmp_path / "search.db")
-        conn = sqlite3.connect(db_path)
-        create_mft_table(conn)
-        conn.close()
+        init_db_with_mft(db_path)
         
         search = FTS5Search(db_path)
         
@@ -62,9 +60,7 @@ class TestFTS5SearchInit:
     def test_init_creates_triggers(self, tmp_path):
         """测试初始化创建触发器"""
         db_path = str(tmp_path / "search.db")
-        conn = sqlite3.connect(db_path)
-        create_mft_table(conn)
-        conn.close()
+        init_db_with_mft(db_path)
         
         search = FTS5Search(db_path)
         
@@ -85,9 +81,7 @@ class TestFTS5SearchBasic:
     def test_search_empty(self, tmp_path):
         """测试空搜索"""
         db_path = str(tmp_path / "search.db")
-        conn = sqlite3.connect(db_path)
-        create_mft_table(conn)
-        conn.close()
+        init_db_with_mft(db_path)
         
         search = FTS5Search(db_path)
         
@@ -98,9 +92,7 @@ class TestFTS5SearchBasic:
     def test_search_top_k(self, tmp_path):
         """测试限制返回数量"""
         db_path = str(tmp_path / "search.db")
-        conn = sqlite3.connect(db_path)
-        create_mft_table(conn)
-        conn.close()
+        init_db_with_mft(db_path)
         
         search = FTS5Search(db_path)
         
@@ -111,9 +103,7 @@ class TestFTS5SearchBasic:
     def test_search_with_scope(self, tmp_path):
         """测试带范围搜索"""
         db_path = str(tmp_path / "search.db")
-        conn = sqlite3.connect(db_path)
-        create_mft_table(conn)
-        conn.close()
+        init_db_with_mft(db_path)
         
         search = FTS5Search(db_path)
         
@@ -128,8 +118,9 @@ class TestFTS5SearchIndex:
     def test_index_document(self, tmp_path):
         """测试索引文档"""
         db_path = str(tmp_path / "search.db")
+        init_db_with_mft(db_path)
+        
         search = FTS5Search(db_path)
-        create_mft_table(search.conn)
         
         # 插入文档
         search.conn.execute("""
@@ -146,8 +137,9 @@ class TestFTS5SearchIndex:
     def test_index_multiple_documents(self, tmp_path):
         """测试索引多个文档"""
         db_path = str(tmp_path / "search.db")
+        init_db_with_mft(db_path)
+        
         search = FTS5Search(db_path)
-        create_mft_table(search.conn)
         
         # 插入多个文档
         docs = [
@@ -171,8 +163,9 @@ class TestFTS5SearchIndex:
     def test_index_update_document(self, tmp_path):
         """测试更新文档索引"""
         db_path = str(tmp_path / "search.db")
+        init_db_with_mft(db_path)
+        
         search = FTS5Search(db_path)
-        create_mft_table(search.conn)
         
         # 插入文档
         search.conn.execute("""
@@ -195,8 +188,9 @@ class TestFTS5SearchIndex:
     def test_index_delete_document(self, tmp_path):
         """测试删除文档索引"""
         db_path = str(tmp_path / "search.db")
+        init_db_with_mft(db_path)
+        
         search = FTS5Search(db_path)
-        create_mft_table(search.conn)
         
         # 插入文档
         search.conn.execute("""
@@ -217,8 +211,9 @@ class TestFTS5SearchIndex:
     def test_index_soft_delete(self, tmp_path):
         """测试软删除"""
         db_path = str(tmp_path / "search.db")
+        init_db_with_mft(db_path)
+        
         search = FTS5Search(db_path)
-        create_mft_table(search.conn)
         
         # 插入文档
         search.conn.execute("""
@@ -243,9 +238,7 @@ class TestFTS5SearchEdgeCases:
     def test_search_special_characters(self, tmp_path):
         """测试搜索特殊字符"""
         db_path = str(tmp_path / "search.db")
-        conn = sqlite3.connect(db_path)
-        create_mft_table(conn)
-        conn.close()
+        init_db_with_mft(db_path)
         
         search = FTS5Search(db_path)
         
@@ -256,9 +249,7 @@ class TestFTS5SearchEdgeCases:
     def test_search_unicode(self, tmp_path):
         """测试搜索 Unicode"""
         db_path = str(tmp_path / "search.db")
-        conn = sqlite3.connect(db_path)
-        create_mft_table(conn)
-        conn.close()
+        init_db_with_mft(db_path)
         
         search = FTS5Search(db_path)
         
@@ -276,9 +267,7 @@ class TestFTS5SearchEdgeCases:
     def test_search_empty_query(self, tmp_path):
         """测试空查询"""
         db_path = str(tmp_path / "search.db")
-        conn = sqlite3.connect(db_path)
-        create_mft_table(conn)
-        conn.close()
+        init_db_with_mft(db_path)
         
         search = FTS5Search(db_path)
         
@@ -289,9 +278,7 @@ class TestFTS5SearchEdgeCases:
     def test_search_top_k_zero(self, tmp_path):
         """测试 top_k=0"""
         db_path = str(tmp_path / "search.db")
-        conn = sqlite3.connect(db_path)
-        create_mft_table(conn)
-        conn.close()
+        init_db_with_mft(db_path)
         
         search = FTS5Search(db_path)
         
@@ -302,9 +289,7 @@ class TestFTS5SearchEdgeCases:
     def test_close(self, tmp_path):
         """测试关闭连接"""
         db_path = str(tmp_path / "search.db")
-        conn = sqlite3.connect(db_path)
-        create_mft_table(conn)
-        conn.close()
+        init_db_with_mft(db_path)
         
         search = FTS5Search(db_path)
         
