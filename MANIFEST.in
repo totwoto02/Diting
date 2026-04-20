@@ -1,0 +1,12 @@
+# MANIFEST.in - 包含构建所需的额外文件
+
+include README.md
+include requirements.txt
+include LICENSE
+include CHANGELOG.md
+
+recursive-include diting *.py *.md *.json
+recursive-include tests *.py
+recursive-exclude * __pycache__
+recursive-exclude * *.pyc
+recursive-exclude * .git
