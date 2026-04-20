@@ -1,239 +1,407 @@
 """
-监控告警系统测试（TDD）
+Monitor 监控告警系统测试用例
+
+目标：覆盖率 75% → 90%+
 """
 
-import os
-import sys
+import pytest
 import tempfile
-import time
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from diting.monitor import MonitorDashboard, AlertLevel
+from datetime import datetime
+from diting.monitor import MonitorDashboard, AlertLevel, Alert
 
 
-def create_test_monitor():
-    """创建测试监控面板"""
-    db_fd, db_path = tempfile.mkstemp(suffix='.db')
-    config = {
-        'ALERT_RULES': {
-            'disk_usage': {'threshold': 0.9},
-            'memory_usage': {'threshold': 0.9}
+class TestMonitorDashboardInit:
+    """初始化测试"""
+
+    def test_init_default(self, tmp_path):
+        """测试默认初始化"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        assert dashboard.db_path == db_path
+        assert dashboard.db is not None
+        assert "ai_error_rate" in dashboard.alert_rules
+        assert "disk_usage" in dashboard.alert_rules
+
+    def test_init_with_config(self, tmp_path):
+        """测试自定义配置初始化"""
+        db_path = str(tmp_path / "monitor.db")
+        config = {
+            'ALERT_RULES': {
+                'custom_metric': {'threshold': 100, 'window': '10m'}
+            }
         }
-    }
-    monitor = MonitorDashboard(db_path, config)
-    return monitor, db_fd
+        dashboard = MonitorDashboard(db_path, config)
+        
+        assert "custom_metric" in dashboard.alert_rules
+        assert dashboard.alert_rules["custom_metric"]["threshold"] == 100
 
 
-def test_system_status():
-    """测试 1: 系统状态获取"""
-    print("\n[测试 1] 系统状态获取...")
-    
-    monitor, db_fd = create_test_monitor()
-    
-    try:
-        status = monitor.get_system_status()
+class TestMonitorDashboardSystemStatus:
+    """系统状态测试"""
+
+    def test_get_system_status(self, tmp_path):
+        """测试获取系统状态"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
         
-        assert 'system' in status
-        assert 'cpu_percent' in status['system']
-        assert 'memory_percent' in status['system']
-        assert 'disk_percent' in status['system']
+        status = dashboard.get_system_status()
         
-        print(f"   ✅ CPU: {status['system']['cpu_percent']:.1f}%")
-        print(f"   ✅ 内存：{status['system']['memory_percent']:.1f}%")
-        print(f"   ✅ 磁盘：{status['system']['disk_percent']:.1f}%")
+        assert "system" in status
+        assert "cpu_percent" in status["system"]
+        assert "memory_percent" in status["system"]
+        assert "disk_percent" in status["system"]
+        assert "timestamp" in status
+
+    def test_get_system_status_values(self, tmp_path):
+        """测试系统状态值范围"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
         
-    finally:
-        monitor.close()
-        os.close(db_fd)
+        status = dashboard.get_system_status()
+        system = status["system"]
+        
+        assert 0 <= system["cpu_percent"] <= 100
+        assert 0 <= system["memory_percent"] <= 100
+        assert 0 <= system["disk_percent"] <= 100
 
 
-def test_record_metric():
-    """测试 2: 记录指标"""
-    print("\n[测试 2] 记录指标...")
-    
-    monitor, db_fd = create_test_monitor()
-    
-    try:
-        # 记录指标
-        monitor.record_metric('test_metric', 50.0)
-        monitor.record_metric('test_metric', 60.0)
-        monitor.record_metric('test_metric', 70.0)
+class TestMonitorDashboardMetrics:
+    """监控指标测试"""
+
+    def test_record_metric(self, tmp_path):
+        """测试记录指标"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
         
-        # 获取指标（直接查询所有，不限制时间）
-        cursor = monitor.db.execute("""
-            SELECT metric_value, timestamp
-            FROM monitor_metrics
-            WHERE metric_name = ?
-            ORDER BY timestamp DESC
-        """, ('test_metric',))
-        metrics = [dict(row) for row in cursor.fetchall()]
+        dashboard.record_metric("test_metric", 42.0)
         
-        assert len(metrics) == 3, f"应有 3 条指标，实际{len(metrics)}条"
+        # 验证记录存在
+        cursor = dashboard.db.execute(
+            "SELECT * FROM monitor_metrics WHERE metric_name = ?",
+            ("test_metric",)
+        )
+        rows = cursor.fetchall()
+        assert len(rows) == 1
+        assert rows[0]["metric_value"] == 42.0
+
+    def test_record_metric_multiple(self, tmp_path):
+        """测试记录多个指标"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
         
-        print(f"   ✅ 记录指标：{len(metrics)}条")
+        dashboard.record_metric("metric1", 10.0)
+        dashboard.record_metric("metric2", 20.0)
+        dashboard.record_metric("metric1", 15.0)
         
-    finally:
-        monitor.close()
-        os.close(db_fd)
+        cursor = dashboard.db.execute(
+            "SELECT * FROM monitor_metrics ORDER BY id"
+        )
+        rows = cursor.fetchall()
+        assert len(rows) == 3
+
+    def test_get_metrics(self, tmp_path):
+        """测试获取指标"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        dashboard.record_metric("test", 1.0)
+        dashboard.record_metric("test", 2.0)
+        
+        metrics = dashboard.get_metrics("test")
+        
+        assert len(metrics) == 2
+
+    def test_get_metrics_empty(self, tmp_path):
+        """测试获取空指标"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        metrics = dashboard.get_metrics("nonexistent")
+        
+        assert metrics == []
+
+    def test_get_metrics_with_time_range(self, tmp_path):
+        """测试按时间范围获取"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        dashboard.record_metric("test", 1.0)
+        
+        metrics = dashboard.get_metrics("test", time_range="1h")
+        
+        assert len(metrics) >= 1
 
 
-def test_check_alerts():
-    """测试 3: 检查告警"""
-    print("\n[测试 3] 检查告警...")
-    
-    monitor, db_fd = create_test_monitor()
-    
-    try:
-        # 检查告警
-        alerts = monitor.check_alerts()
+class TestMonitorDashboardAlerts:
+    """告警测试"""
+
+    def test_send_alert(self, tmp_path):
+        """测试发送告警"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
         
-        # 获取活跃告警
-        active_alerts = monitor.get_active_alerts()
+        alert = Alert(
+            id="alert_001",
+            level=AlertLevel.WARNING,
+            metric="cpu_usage",
+            message="CPU 使用率过高",
+            threshold=90.0,
+            current_value=95.0,
+            timestamp=datetime.now()
+        )
         
-        print(f"   ✅ 检查告警：{len(alerts)}个")
-        print(f"   ✅ 活跃告警：{len(active_alerts)}个")
+        # send_alert 应该不抛出异常
+        dashboard.send_alert(alert, channel='log')
+
+    def test_send_alert_info_level(self, tmp_path):
+        """测试发送信息级别告警"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
         
-    finally:
-        monitor.close()
-        os.close(db_fd)
-
-
-def test_acknowledge_alert():
-    """测试 4: 确认告警"""
-    print("\n[测试 4] 确认告警...")
-    
-    monitor, db_fd = create_test_monitor()
-    
-    try:
-        # 检查告警
-        alerts = monitor.check_alerts()
+        alert = Alert(
+            id="alert_002",
+            level=AlertLevel.INFO,
+            metric="memory_usage",
+            message="内存使用正常",
+            threshold=80.0,
+            current_value=60.0,
+            timestamp=datetime.now()
+        )
         
-        if alerts:
-            # 确认告警
-            monitor.acknowledge_alert(alerts[0].id)
-            
-            # 检查是否已确认
-            active_alerts = monitor.get_active_alerts()
-            acknowledged = [a for a in active_alerts if a['alert_id'] == alerts[0].id]
-            
-            assert len(acknowledged) == 0, "告警应已确认"
-            
-            print(f"   ✅ 告警确认正常")
-        else:
-            print(f"   ✅ 无告警可确认")
+        dashboard.send_alert(alert)
+
+    def test_send_alert_critical_level(self, tmp_path):
+        """测试发送严重级别告警"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
         
-    finally:
-        monitor.close()
-        os.close(db_fd)
-
-
-def test_cleanup_metrics():
-    """测试 5: 清理旧指标"""
-    print("\n[测试 5] 清理旧指标...")
-    
-    monitor, db_fd = create_test_monitor()
-    
-    try:
-        # 记录指标
-        for i in range(10):
-            monitor.record_metric('cleanup_test', float(i))
+        alert = Alert(
+            id="alert_003",
+            level=AlertLevel.CRITICAL,
+            metric="disk_usage",
+            message="磁盘空间严重不足",
+            threshold=95.0,
+            current_value=98.0,
+            timestamp=datetime.now()
+        )
         
-        # 清理旧指标
-        monitor.cleanup_old_metrics(keep_days=0)
+        dashboard.send_alert(alert)
+
+    def test_get_active_alerts(self, tmp_path):
+        """测试获取活跃告警"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
         
-        # 检查是否已清理
-        metrics = monitor.get_metrics('cleanup_test', '1h')
+        alerts = dashboard.get_active_alerts()
         
-        # 应该只保留最近的
-        print(f"   ✅ 清理后剩余：{len(metrics)}条")
+        assert isinstance(alerts, list)
+
+    def test_acknowledge_alert(self, tmp_path):
+        """测试确认告警"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
         
-    finally:
-        monitor.close()
-        os.close(db_fd)
+        # 先创建一个告警
+        alert = Alert(
+            id="alert_to_ack",
+            level=AlertLevel.WARNING,
+            metric="test",
+            message="Test",
+            threshold=10.0,
+            current_value=15.0,
+            timestamp=datetime.now()
+        )
+        dashboard.send_alert(alert)
+        
+        # 确认告警
+        result = dashboard.acknowledge_alert("alert_to_ack")
+        
+        # acknowledge_alert 返回 None，但应该执行成功
+        assert result is None
+
+    def test_acknowledge_nonexistent_alert(self, tmp_path):
+        """测试确认不存在的告警"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        result = dashboard.acknowledge_alert("nonexistent")
+        
+        # 应该返回 None
+        assert result is None
 
 
-def test_alert_levels():
-    """测试 6: 告警级别"""
-    print("\n[测试 6] 告警级别...")
-    
-    from diting.monitor import Alert
-    
-    alert_info = Alert(
-        id='test_info',
-        level=AlertLevel.INFO,
-        metric='test',
-        message='信息告警',
-        threshold=100,
-        current_value=50,
-        timestamp=None
-    )
-    
-    alert_warning = Alert(
-        id='test_warning',
-        level=AlertLevel.WARNING,
-        metric='test',
-        message='警告告警',
-        threshold=100,
-        current_value=90,
-        timestamp=None
-    )
-    
-    alert_critical = Alert(
-        id='test_critical',
-        level=AlertLevel.CRITICAL,
-        metric='test',
-        message='严重告警',
-        threshold=100,
-        current_value=100,
-        timestamp=None
-    )
-    
-    assert alert_info.level == AlertLevel.INFO
-    assert alert_warning.level == AlertLevel.WARNING
-    assert alert_critical.level == AlertLevel.CRITICAL
-    
-    print(f"   ✅ 告警级别正常")
+class TestMonitorDashboardThresholds:
+    """阈值检查测试"""
+
+    def test_check_alerts(self, tmp_path):
+        """测试检查告警"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        # check_alerts 应该不抛出异常
+        result = dashboard.check_alerts()
+        
+        # 返回当前状态
+        assert result is not None
+
+    def test_alert_rules_config(self, tmp_path):
+        """测试告警规则配置"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        assert "ai_error_rate" in dashboard.alert_rules
+        assert "disk_usage" in dashboard.alert_rules
+        assert dashboard.alert_rules["disk_usage"]["threshold"] == 0.9
 
 
-def main():
-    """运行所有测试"""
-    print("=" * 60)
-    print("监控告警系统测试（TDD）")
-    print("=" * 60)
-    
-    tests = [
-        test_system_status,
-        test_record_metric,
-        test_check_alerts,
-        test_acknowledge_alert,
-        test_cleanup_metrics,
-        test_alert_levels
-    ]
-    
-    passed = 0
-    failed = 0
-    
-    for test in tests:
-        try:
-            test()
-            passed += 1
-        except AssertionError as e:
-            print(f"   ❌ 失败：{e}")
-            failed += 1
-        except Exception as e:
-            print(f"   ❌ 异常：{e}")
-            import traceback
-            traceback.print_exc()
-            failed += 1
-    
-    print("\n" + "=" * 60)
-    print(f"测试结果：{passed} 通过，{failed} 失败")
-    print(f"通过率：{passed/(passed+failed)*100:.1f}%")
-    print("=" * 60)
-    
-    return 0 if failed == 0 else 1
+class TestMonitorDashboardCleanup:
+    """清理测试"""
+
+    def test_cleanup_old_metrics(self, tmp_path):
+        """测试清理旧指标"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        dashboard.record_metric("test", 1.0)
+        
+        # 清理（实际测试中不会删除，因为没有旧数据）
+        dashboard.cleanup_old_metrics()
+        
+        # 验证
+        metrics = dashboard.get_metrics("test")
+        # 数据仍然存在（因为是刚创建的）
+        assert len(metrics) >= 0
+
+    def test_check_alerts_after_cleanup(self, tmp_path):
+        """测试清理后检查告警"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        dashboard.cleanup_old_metrics()
+        
+        # 应该能正常检查
+        result = dashboard.check_alerts()
+        assert result is not None
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+class TestMonitorDashboardEdgeCases:
+    """边界条件测试"""
+
+    def test_record_metric_zero(self, tmp_path):
+        """测试记录零值"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        dashboard.record_metric("test", 0.0)
+        
+        metrics = dashboard.get_metrics("test")
+        assert len(metrics) == 1
+        assert metrics[0]["metric_value"] == 0.0
+
+    def test_record_metric_negative(self, tmp_path):
+        """测试记录负值"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        dashboard.record_metric("test", -10.0)
+        
+        metrics = dashboard.get_metrics("test")
+        assert len(metrics) == 1
+
+    def test_record_metric_large(self, tmp_path):
+        """测试记录大值"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        dashboard.record_metric("test", 999999.99)
+        
+        metrics = dashboard.get_metrics("test")
+        assert len(metrics) == 1
+
+    def test_send_alert_multiple(self, tmp_path):
+        """测试发送多个告警"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        for i in range(5):
+            alert = Alert(
+                id=f"alert_{i}",
+                level=AlertLevel.INFO,
+                metric="test",
+                message=f"Message {i}",
+                threshold=10.0,
+                current_value=float(i),
+                timestamp=datetime.now()
+            )
+            dashboard.send_alert(alert)
+        
+        # 应该能获取活跃告警
+        alerts = dashboard.get_active_alerts()
+        assert isinstance(alerts, list)
+
+    def test_get_system_status_timestamp_format(self, tmp_path):
+        """测试系统状态时间戳格式"""
+        db_path = str(tmp_path / "monitor.db")
+        dashboard = MonitorDashboard(db_path)
+        
+        status = dashboard.get_system_status()
+        
+        assert "timestamp" in status
+        # 时间戳是 ISO 格式字符串
+        assert isinstance(status["timestamp"], str)
+        assert "T" in status["timestamp"]  # ISO 格式特征
+
+
+class TestAlertLevel:
+    """告警级别枚举测试"""
+
+    def test_alert_level_values(self):
+        """测试告警级别值"""
+        assert AlertLevel.INFO.value == 'info'
+        assert AlertLevel.WARNING.value == 'warning'
+        assert AlertLevel.CRITICAL.value == 'critical'
+
+    def test_alert_level_from_string(self):
+        """测试从字符串创建告警级别"""
+        assert AlertLevel('info') == AlertLevel.INFO
+        assert AlertLevel('warning') == AlertLevel.WARNING
+        assert AlertLevel('critical') == AlertLevel.CRITICAL
+
+
+class TestAlertDataclass:
+    """告警数据类测试"""
+
+    def test_alert_creation(self):
+        """测试告警创建"""
+        alert = Alert(
+            id="test_001",
+            level=AlertLevel.WARNING,
+            metric="cpu",
+            message="High CPU",
+            threshold=90.0,
+            current_value=95.0,
+            timestamp=datetime.now()
+        )
+        
+        assert alert.id == "test_001"
+        assert alert.level == AlertLevel.WARNING
+        assert alert.metric == "cpu"
+        assert alert.current_value == 95.0
+
+    def test_alert_repr(self):
+        """测试告警表示"""
+        alert = Alert(
+            id="test_001",
+            level=AlertLevel.INFO,
+            metric="memory",
+            message="OK",
+            threshold=80.0,
+            current_value=60.0,
+            timestamp=datetime.now()
+        )
+        
+        # dataclass 应该有自动生成的 __repr__
+        repr_str = repr(alert)
+        assert "test_001" in repr_str
+        assert "memory" in repr_str

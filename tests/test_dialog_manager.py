@@ -1,104 +1,310 @@
 """
-测试对话管理器（Dialog Manager）
+Dialog Manager 对话管理器测试用例
+
+目标：覆盖率 75% → 90%+
 """
 
-import sys
-import os
-import tempfile
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from diting.mft import MFT
+import pytest
+from unittest.mock import MagicMock, Mock
 from diting.dialog_manager import DialogManager
 
 
-def test_dialog_manager():
-    """测试对话管理器"""
-    print("=" * 70)
-    print("对话管理器测试")
-    print("=" * 70)
-    
-    # 使用临时数据库避免并发冲突
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
-        db_path = f.name
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
-        kg_db_path = f.name
-    
-    try:
-        # 创建 MFT 和 DialogManager
-        mft = MFT(db_path=db_path, kg_db_path=kg_db_path)
-        dm = DialogManager(mft)
+class TestDialogManagerInit:
+    """初始化测试"""
+
+    def test_init(self):
+        """测试初始化"""
+        mft = MagicMock()
+        manager = DialogManager(mft)
         
-        print("\n[测试 1] 添加对话（热数据）...")
-        path1 = dm.add_dialog("session_001", "user", "你好，我想了解一下 DITING_ 项目")
-        path2 = dm.add_dialog("session_001", "assistant", "DITING_ 是 Memory File System 的缩写...")
-        path3 = dm.add_dialog("session_001", "user", "与测试用户约定的拍照时间是哪天？")
+        assert manager.mft == mft
+        assert manager.path_hot == "/dialog/hot"
+        assert manager.path_warm == "/dialog/warm"
+        assert manager.path_cold == "/dialog/cold"
+        assert manager.hot_days == 7
+        assert manager.warm_days == 30
+
+
+class TestDialogManagerAddDialog:
+    """添加对话测试"""
+
+    def test_add_dialog_basic(self):
+        """测试基本添加对话"""
+        mft = MagicMock()
+        mft.create.return_value = True
+        manager = DialogManager(mft)
         
-        print(f"   ✅ 添加 3 条对话到热数据区")
-        print(f"      - {path1}")
-        print(f"      - {path2}")
-        print(f"      - {path3}")
+        path = manager.add_dialog("session1", "user", "Hello")
         
-        print("\n[测试 2] 获取会话历史...")
-        history = dm.get_dialog_history("session_001", days=7)
-        print(f"   ✅ session_001 的历史对话：{len(history)} 条")
-        for h in history:
-            print(f"      - {h['v_path']}: {h['content'][:50]}...")
+        assert path.startswith("/dialog/hot/session1/")
+        mft.create.assert_called_once()
         
-        print("\n[测试 3] 标记重要对话...")
-        dm.mark_as_important(path3, "用户询问重要约会时间")
-        print(f"   ✅ 对话已标记为重要，移到冷数据区")
+        call_args = mft.create.call_args
+        # mft.create 的参数是 (path, type, content, **metadata)
+        assert call_args[0][2] == "Hello"  # content
+
+    def test_add_dialog_with_metadata(self):
+        """测试带元数据添加对话"""
+        mft = MagicMock()
+        manager = DialogManager(mft)
         
-        print("\n[测试 4] 搜索对话...")
-        results = dm.search_dialogs("测试用户", scope="all")
-        print(f"   ✅ 搜索'测试用户' 找到 {len(results)} 条结果")
-        for r in results:
-            print(f"      - {r['v_path']}: {r['content'][:50]}...")
+        manager.add_dialog("session1", "assistant", "Hi", metadata={"key": "value"})
         
-        print("\n[测试 5] 获取统计信息...")
-        stats = dm.get_stats()
-        print(f"   ✅ 统计信息:")
-        print(f"      - 热数据路径：{stats['hot_path']}")
-        print(f"      - 温数据路径：{stats['warm_path']}")
-        print(f"      - 冷数据路径：{stats['cold_path']}")
-        print(f"      - 热数据阈值：{stats['hot_days']} 天")
-        print(f"      - 温数据阈值：{stats['warm_days']} 天")
+        mft.create.assert_called_once()
+
+    def test_add_dialog_batch(self):
+        """测试批量添加对话"""
+        mft = MagicMock()
+        manager = DialogManager(mft)
         
-        print("\n[测试 6] 批量添加对话...")
         messages = [
-            {"role": "user", "content": "今天天气怎么样？"},
-            {"role": "assistant", "content": "今天晴天，气温 25 度。"},
-            {"role": "user", "content": "好的，谢谢！"}
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi"},
+            {"role": "user", "content": "How are you?"}
         ]
-        paths = dm.add_dialog_batch("session_002", messages)
-        print(f"   ✅ 批量添加 {len(paths)} 条对话")
         
-        print("\n" + "=" * 70)
-        print("🎉 所有测试通过！")
-        print("=" * 70)
+        paths = manager.add_dialog_batch("session1", messages)
         
-        print("\n📊 测试结果:")
-        print("   ✅ 热数据存储正常")
-        print("   ✅ 会话历史查询正常")
-        print("   ✅ 重要对话标记正常")
-        print("   ✅ 对话搜索正常")
-        print("   ✅ 批量添加正常")
+        assert len(paths) == 3
+        assert mft.create.call_count == 3
+
+    def test_add_dialog_batch_empty(self):
+        """测试空批量添加"""
+        mft = MagicMock()
+        manager = DialogManager(mft)
         
-        return True
-    finally:
-        # 清理临时数据库
-        if hasattr(mft, 'close'):
-            mft.close()
-        os.unlink(db_path)
-        os.unlink(kg_db_path)
+        paths = manager.add_dialog_batch("session1", [])
+        
+        assert len(paths) == 0
+        assert mft.create.call_count == 0
 
 
-if __name__ == "__main__":
-    try:
-        test_dialog_manager()
-        sys.exit(0)
-    except Exception as e:
-        print(f"\n❌ 测试失败：{e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+class TestDialogManagerMarkImportant:
+    """标记重要对话测试"""
+
+    def test_mark_as_important_success(self):
+        """测试成功标记重要"""
+        mft = MagicMock()
+        mft.read.return_value = {"content": "Important content"}
+        mft.create.return_value = True
+        mft.update.return_value = True
+        manager = DialogManager(mft)
+        
+        result = manager.mark_as_important("/dialog/hot/session1/msg", reason="测试")
+        
+        assert result is True
+        mft.create.assert_called_once()
+        mft.update.assert_called_once()
+
+    def test_mark_as_important_not_found(self):
+        """测试标记不存在的对话"""
+        mft = MagicMock()
+        mft.read.return_value = None
+        manager = DialogManager(mft)
+        
+        result = manager.mark_as_important("/nonexistent", reason="测试")
+        
+        assert result is False
+        mft.create.assert_not_called()
+
+    def test_mark_as_important_empty_reason(self):
+        """测试标记重要无原因"""
+        mft = MagicMock()
+        mft.read.return_value = {"content": "Content"}
+        manager = DialogManager(mft)
+        
+        result = manager.mark_as_important("/dialog/hot/session1/msg")
+        
+        assert result is True
+
+
+class TestDialogManagerExtractSummary:
+    """提取摘要测试"""
+
+    def test_extract_summary_short(self):
+        """测试短内容摘要"""
+        mft = MagicMock()
+        mft.read.return_value = {"content": "Short content"}
+        manager = DialogManager(mft)
+        
+        summary = manager.extract_summary("/path")
+        
+        assert summary == "Short content"
+
+    def test_extract_summary_long(self):
+        """测试长内容摘要"""
+        mft = MagicMock()
+        long_content = "A" * 300
+        mft.read.return_value = {"content": long_content}
+        manager = DialogManager(mft)
+        
+        summary = manager.extract_summary("/path")
+        
+        assert len(summary) == 203  # 200 + "..."
+        assert summary.endswith("...")
+
+    def test_extract_summary_not_found(self):
+        """测试提取不存在的对话"""
+        mft = MagicMock()
+        mft.read.return_value = None
+        manager = DialogManager(mft)
+        
+        summary = manager.extract_summary("/nonexistent")
+        
+        assert summary is None
+
+    def test_extract_summary_exact_200(self):
+        """测试正好 200 字的内容"""
+        mft = MagicMock()
+        content = "A" * 200
+        mft.read.return_value = {"content": content}
+        manager = DialogManager(mft)
+        
+        summary = manager.extract_summary("/path")
+        
+        assert summary == content
+        assert not summary.endswith("...")
+
+
+class TestDialogManagerMigrateToWarm:
+    """迁移到温数据测试"""
+
+    def test_migrate_to_warm_success(self):
+        """测试成功迁移"""
+        mft = MagicMock()
+        mft.read.return_value = {"content": "Content to migrate"}
+        mft.create.return_value = True
+        mft.update.return_value = True
+        manager = DialogManager(mft)
+        
+        result = manager.migrate_to_warm("/dialog/hot/session1/msg")
+        
+        assert result is True
+        mft.create.assert_called_once()
+        mft.update.assert_called_once()
+
+    def test_migrate_to_warm_extract_fails(self):
+        """测试摘要提取失败"""
+        mft = MagicMock()
+        mft.read.return_value = None  # 提取失败
+        manager = DialogManager(mft)
+        
+        result = manager.migrate_to_warm("/dialog/hot/session1/msg")
+        
+        assert result is False
+        mft.create.assert_not_called()
+
+
+class TestDialogManagerCleanup:
+    """清理测试"""
+
+    def test_cleanup_old_dialogs(self):
+        """测试清理过期对话"""
+        mft = MagicMock()
+        manager = DialogManager(mft)
+        
+        stats = manager.cleanup_old_dialogs()
+        
+        assert "hot_to_warm" in stats
+        assert "warm_deleted" in stats
+        assert stats["hot_to_warm"] == 0
+        assert stats["warm_deleted"] == 0
+
+
+class TestDialogManagerSearch:
+    """搜索测试"""
+
+    def test_search_dialogs_all_scope(self):
+        """测试全范围搜索"""
+        mft = MagicMock()
+        mft.search.return_value = [{"path": "/test", "content": "match"}]
+        manager = DialogManager(mft)
+        
+        results = manager.search_dialogs("query", scope="all")
+        
+        assert len(results) >= 0
+        assert mft.search.call_count == 3  # hot, warm, cold
+
+    def test_search_dialogs_hot_scope(self):
+        """测试热数据范围搜索"""
+        mft = MagicMock()
+        mft.search.return_value = []
+        manager = DialogManager(mft)
+        
+        results = manager.search_dialogs("query", scope="hot")
+        
+        assert mft.search.call_count == 1
+
+    def test_search_dialogs_warm_scope(self):
+        """测试温数据范围搜索"""
+        mft = MagicMock()
+        manager = DialogManager(mft)
+        
+        manager.search_dialogs("query", scope="warm")
+        
+        assert mft.search.call_count == 1
+
+    def test_search_dialogs_cold_scope(self):
+        """测试冷数据范围搜索"""
+        mft = MagicMock()
+        manager = DialogManager(mft)
+        
+        manager.search_dialogs("query", scope="cold")
+        
+        assert mft.search.call_count == 1
+
+    def test_search_dialogs_no_results(self):
+        """测试搜索无结果"""
+        mft = MagicMock()
+        mft.search.return_value = []
+        manager = DialogManager(mft)
+        
+        results = manager.search_dialogs("nonexistent")
+        
+        assert results == []
+
+
+class TestDialogManagerHistory:
+    """历史记录测试"""
+
+    def test_get_dialog_history(self):
+        """测试获取对话历史"""
+        mft = MagicMock()
+        mft.search.return_value = [
+            {"create_ts": "20260420_100000", "content": "msg1"},
+            {"create_ts": "20260420_110000", "content": "msg2"}
+        ]
+        manager = DialogManager(mft)
+        
+        history = manager.get_dialog_history("session1", days=7)
+        
+        assert len(history) == 2
+        # 应该按时间排序
+        assert history[0]["create_ts"] < history[1]["create_ts"]
+
+    def test_get_dialog_history_empty(self):
+        """测试空历史"""
+        mft = MagicMock()
+        mft.search.return_value = []
+        manager = DialogManager(mft)
+        
+        history = manager.get_dialog_history("nonexistent")
+        
+        assert history == []
+
+
+class TestDialogManagerStats:
+    """统计测试"""
+
+    def test_get_stats(self):
+        """测试获取统计信息"""
+        mft = MagicMock()
+        manager = DialogManager(mft)
+        
+        stats = manager.get_stats()
+        
+        assert stats["hot_path"] == "/dialog/hot"
+        assert stats["warm_path"] == "/dialog/warm"
+        assert stats["cold_path"] == "/dialog/cold"
+        assert stats["hot_days"] == 7
+        assert stats["warm_days"] == 30
